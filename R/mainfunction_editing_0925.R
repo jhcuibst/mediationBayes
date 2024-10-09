@@ -1,9 +1,4 @@
 
-# Some useful keyboard shortcuts for package authoring:
-#
-#   Install Package:           'Ctrl + Shift + B'
-#   Check Package:             'Ctrl + Shift + E'
-#   Test Package:              'Ctrl + Shift + T'
 library(brms)
 # **************************************************
 # This function only for zero-inflated mediator iwth hurdle model
@@ -12,6 +7,28 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
                           control.value = 0, treat.value = 1,
                           logM = FALSE )
 {
+  # Check whether package 'brms' is installed
+
+  if (!require("brms", character.only = TRUE)) {
+    # Ask the user if they want to install the package
+    answer <- readline(prompt = "Package 'brms' is not installed. Do you want to install it? (yes/no): ")
+
+    if (tolower(answer) == "yes" || answer == "y" || answer == "") {
+      # Install the package
+      install.packages("brms")
+      # Load the package after installation
+      library(brms, character.only = TRUE)
+      message("Package 'brms' has been installed and loaded.")
+    } else {
+      stop("Package 'brms' is required but not installed. Exiting.")
+    }
+  } else {
+    message("Package 'brms' is already installed and loaded.")
+  }
+
+  message("Your main function is running...")
+
+
   value = c(control.value, treat.value)
 
   # *********************************************************************
@@ -315,11 +332,17 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
       res.rr = cal.rr.effects.ind(outcome.pred)
       rst <- list(effects.rd = res.rd, effects.rr = res.rr, outcome.linpred=outcome.linpred, outcome.pred = outcome.pred)
     } else if(zi.outcome){
-      res.mu = cal.effects.ind(outcome.pred.mu)
-      res.zi = cal.effects.ind(outcome.pred.zi)
-      res.overall = cal.effects.ind(outcome.pred.overall)
-      rst <- list(effects.mu = res.mu, effects.zi = res.zi, effects.overall = res.overall,
-                  outcome.linpred.mu=outcome.linpred.mu, outcome.linpred.zi=outcome.linpred.zi)
+      res.mu.rr = cal.rr.effects.ind(outcome.pred.mu)
+      res.zi.rr = cal.rr.effects.ind(outcome.pred.zi)
+      res.overall.rr = cal.rr.effects.ind(outcome.pred.overall)
+      res.rr <- list(effects.mu.rr = res.mu.rr, effects.zi.rr = res.zi.rr, effects.overall.rr = res.overall.rr)
+
+      res.mu.rd = cal.effects.ind(outcome.pred.mu)
+      res.zi.rd = cal.effects.ind(outcome.pred.zi)
+      res.overall.rd = cal.effects.ind(outcome.pred.overall)
+      res.rd <- list(effects.mu.rd = res.mu.rd, effects.zi.rd = res.zi.rd, effects.overall.rd = res.overall.rd)
+      rst <- list(effects.rd = res.rd, effects.rr = res.rr, outcome.linpred.mu=outcome.linpred.mu, outcome.linpred.zi=outcome.linpred.zi)
+
     } else{
       res = cal.effects.ind(outcome.pred)
       rst <- list(effects = res, outcome.linpred=outcome.linpred, outcome.pred = outcome.pred)
@@ -328,24 +351,24 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
   } else {
 
     if(y_link == "logit") {
-      res.rd = cal.effects.jc(outcome.pred)
+      res.rd = cal.diff.effects(outcome.pred)
       res.rr = cal.rr.effects(outcome.pred)
       rst <- list(effects.rd = res.rd, effects.rr = res.rr, outcome.linpred=outcome.linpred, outcome.pred = outcome.pred)
     } else if(zi.outcome){
-      res.mu = cal.effects.jc(outcome.pred.mu)
-      res.zi = cal.effects.jc(outcome.pred.zi)
-      res.overall = cal.effects.jc(outcome.pred.overall)
+      res.mu = cal.diff.effects(outcome.pred.mu)
+      res.zi = cal.diff.effects(outcome.pred.zi)
+      res.overall = cal.diff.effects(outcome.pred.overall)
       rst <- list(effects.mu = res.mu, effects.zi = res.zi, effects.overall = res.overall,
                   outcome.linpred.mu=outcome.linpred.mu, outcome.linpred.zi=outcome.linpred.zi)
     } else{
-      res = cal.effects.jc(outcome.pred)
+      res = cal.diff.effects(outcome.pred)
       rst <- list(effects = res, outcome.linpred=outcome.linpred, outcome.pred = outcome.pred)
     }
   }
   rst
 }
 
-cal.effects.jc <- function(outcome.pred)
+cal.diff.effects <- function(outcome.pred)
 {
   direct_control = outcome.pred[2,1,1,,] - outcome.pred[1,1,1,,]
   # treated: Y(1,M(1)) - Y(0,M(1))
@@ -467,7 +490,7 @@ cal.effects.ind  <- function(outcome.pred)
       2*min(mean(direct<0), mean(direct>0))),
 
     c(mean(pmed), median(pmed), sd(pmed),
-      quantile(pmed, probs=c(0.025,0.975)),
+      quantile(pmed, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(pmed<0), mean(pmed>0)))
   ) # Bayes p-value: tail probability (see JMbayes), 2*min{pr(b<0), pr(b>0))}
   res[,1:5] = round(res[,1:5], digits=3)
