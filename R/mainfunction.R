@@ -467,7 +467,7 @@ cal.effects.ind  <- function(outcome.pred)
       2*min(mean(direct<0), mean(direct>0))),
 
     c(mean(pmed), median(pmed), sd(pmed),
-      quantile(pmed, probs=c(0.025,0.975)),
+      quantile(pmed, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(pmed<0), mean(pmed>0)))
   ) # Bayes p-value: tail probability (see JMbayes), 2*min{pr(b<0), pr(b>0))}
   res[,1:5] = round(res[,1:5], digits=3)
