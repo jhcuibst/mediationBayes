@@ -13,10 +13,10 @@
 }
 
 \arguments{
-*medbayes <- function(model.m = NULL, model.y = NULL,
+medbayes <- function(model.m = NULL, model.y = NULL,
                      treat = "treatment", mediator = "mediator", ind_mediator = NULL, outcome = "outcome",
                      control.value = 0, treat.value = 1,
-                     logM = FALSE )*
+                     logM = FALSE )
 
 \item{model.m}{
   mediator model: can be all the standard families defined in \code{\link{brms}}.
