@@ -24,10 +24,9 @@ data(example_data)
 This data (n = 500) is simulated given the 'datasim' function in our package. Users can define the coefficients and distribution and generate data as they want. This existed example dataset only used as a simple example.
 
 ### Meanings of variables in the dataset
-
+|Name | Meaning                    |
 |-----|----------------------------|
 |x:   |Exposure variable.|
-|-----|----------------------------|
 |mnb: |Mediator with zero-infalted negative bionomial (ZINB) distribution.|
 |-----|----------------------------|
 |xm:  |The interaction between exposure and mediator. User can defined it directly in the model fitting using the same way as thos in R package _glm_.|
