@@ -1,13 +1,15 @@
 \name{datasim}
 \Rdversion{1.1.0}
-\alias{mediationBayes:medbayes}
+\alias{mediationBayes:example_data}
 \docType{package}
 \title{
   The example data used for testing function.
 }
 
 \description{
-  This data is simulated given the 'datasim' function in our package. Users can define the coefficients and distribution and generate data as they want. This existed example dataset only used for testing.
+load data using: data(example_data)
+
+This data (n = 500) is simulated given the 'datasim' function in our package. Users can define the coefficients and distribution and generate data as they want. This existed example dataset only used as a simple example.
 }
 
 \arguments{
@@ -32,6 +34,33 @@
   }
 
 }
+
+\usage{
+data(example_data)
+# Set up priors
+prior.m = c(
+  set_prior("student_t(3, 0, 2.5)", class = "b"),
+  set_prior("student_t(3, 0, 2.5)", class = "b", dpar = "hu") )
+
+prior.y = set_prior("student_t(3, 0, 2.5)", class="b")
+
+# Fit Bayesian models
+hnb.m <- brm(bf(mnb~ x + age, hu ~ x + age), data = example_data, prior = prior.m,
+             family = hurdle_negbinomial(), chains = 4, iter = 2000)
+
+hnb.y <- brm(y ~  x + mnb + age + im, data = example_data, prior = prior.y,
+            family = bernoulli(), chains = 4, iter = 2000)
+
+# Get outputs of mediation analysis
+outmed = medbayes(hnb.m, hnb.y, mediator="mnb", treat="x", outcome = "y", ind_mediator = "im",
+          control.value = 0, treat.value = 1)
+
+# Results under Risk Difference (RD) scale
+outmed$effects.rd
+# Results under Relative Risk (RR) scale
+outmed$effects.rr
+}
+
 
 \author{
   Jinhong Cui, jhcui@uab.edu
