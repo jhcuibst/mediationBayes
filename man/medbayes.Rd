@@ -68,11 +68,13 @@ prior.m = c(
 prior.y = set_prior("student_t(3, 0, 2.5)", class="b")
 
 # fit models
-hnb.m <- brm(bf(mnb~ x + c, hu ~ x + c), data = data1, prior = prior.m, family = hurdle_negbinomial(), chains = 4, iter = 2000)
-hnb.y <- brm(y ~  x + m + c + im, data = data1, prior = prior.y, family = bernoulli(), chains = 4, iter = 2000)
+hnb.m <- brm(bf(mnb~ x + c, hu ~ x + c), data = data1, prior = prior.m,
+            family = hurdle_negbinomial(), chains = 4, iter = 2000)
+hnb.y <- brm(y ~  x + m + c + im, data = data1, prior = prior.y,
+             family = bernoulli(), chains = 4, iter = 2000)
 
 outmed = medbayes(hnb.m, hnb.y, mediator="mnb", treat="x", outcome = "y", ind_mediator = "im",
-                         control.value = 0, treat.value = 1)
+                  control.value = 0, treat.value = 1)
 
 # For binary outcomes, we provide results under both Relative Risk (RR) and Risk Difference (RD) scales
 ## to get restuls under RR  scale:
