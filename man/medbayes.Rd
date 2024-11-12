@@ -59,6 +59,9 @@ only, represented by the solid line pathway in Figure 1(B) (we defined it as \eq
 }
 
 \examples{
+# Loade data
+data(example_data)
+
 # set up priors
 prior.m = c(
   set_prior("student_t(3, 0, 2.5)", class = "b"),
@@ -68,18 +71,21 @@ prior.m = c(
 prior.y = set_prior("student_t(3, 0, 2.5)", class="b")
 
 # fit models
-hnb.m <- brm(bf(mnb~ x + c, hu ~ x + c), data = data1, prior = prior.m,
+hnb.m <- brm(bf(mnb~ x + c, hu ~ x + c), data = data(example_data), prior = prior.m,
             family = hurdle_negbinomial(), chains = 4, iter = 2000)
-hnb.y <- brm(y ~  x + m + c + im, data = data1, prior = prior.y,
+hnb.y <- brm(y ~  x + m + c + im, data = data(example_data), prior = prior.y,
              family = bernoulli(), chains = 4, iter = 2000)
 
-outmed = medbayes(hnb.m, hnb.y, mediator="mnb", treat="x", outcome = "y", ind_mediator = "im",
+outmed <- medbayes(hnb.m, hnb.y, mediator="mnb", treat="x", outcome = "y", ind_mediator = "im",
                   control.value = 0, treat.value = 1)
 
 # For binary outcomes, we provide results under both Relative Risk (RR) and Risk Difference (RD) scales
+
 ## to get restuls under RR  scale:
-rst.rr <- out.edit$effects.rr
-rst.rr
+outmed$effects.rr
+
+## to get restuls under RD scale:
+outmed$effects.rd
 }
 
 \author{
