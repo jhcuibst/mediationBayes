@@ -1,7 +1,6 @@
 \name{mediationBayes}
 \Rdversion{1.1.0}
 \alias{mediationBayes-package}
-\alias{mediationBayes}
 \docType{package}
 \title{
   Bayesian mediation analysis for zero-inflated data.
