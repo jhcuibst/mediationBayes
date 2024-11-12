@@ -1,3 +1,2 @@
 exportPattern("^[[:alpha:]]+")
-export(brms)
 export(medbayes)
