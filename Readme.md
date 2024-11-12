@@ -17,7 +17,7 @@ devtools::install_github("jhcuibst/mediationBayes")
 
 ## Example 
 
-### load data: 
+### Load data: 
 
 data(example_data)
 
