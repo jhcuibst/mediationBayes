@@ -12,7 +12,7 @@
   Priors can be defined by user as they need. If no priors are specified, then default priors are utilized. For details of prior distributions, please refer to R package \link{brms}.
 }
 
-\usage{
+\arguments{
 *medbayes <- function(model.m = NULL, model.y = NULL,
                      treat = "treatment", mediator = "mediator", ind_mediator = NULL, outcome = "outcome",
                      control.value = 0, treat.value = 1,
