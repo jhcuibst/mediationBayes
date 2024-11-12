@@ -11,3 +11,4 @@ Description: This R package provides a flexible Bayesian mediation analysis fram
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
+RoxygenNote: 7.2.1
