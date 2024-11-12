@@ -28,13 +28,10 @@ This data (n = 500) is simulated given the 'datasim' function in our package. Us
 |-----|----------------------------|
 |x:   |Exposure variable.|
 |mnb: |Mediator with zero-infalted negative bionomial (ZINB) distribution.|
-|-----|----------------------------|
 |xm:  |The interaction between exposure and mediator. User can defined it directly in the model fitting using the same way as thos in R package _glm_.|
-|-----|----------------------------|
 |im:  |The indicator of zerl-inflated mediator, which is used for estimating decomposed Narutal Indirect Effect (NIE).|
-|-----|----------------------------|
 |y:  |The outcome variable.|
-|-----|----------------------------|
+
 ### Conduct mediation analysis 
 
 #### Set up priors
