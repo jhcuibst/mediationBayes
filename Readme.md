@@ -24,17 +24,18 @@ data(example_data)
 This data (n = 500) is simulated given the 'datasim' function in our package. Users can define the coefficients and distribution and generate data as they want. This existed example dataset only used as a simple example.
 
 ### Meanings of variables in the dataset
-<pre>
-x:   Exposure variable
+|     |                            |
+|-----|----------------------------|
+|x:   |Exposure variable.|
 
-mnb: Mediator with zero-infalted negative bionomial (ZINB) distribution.
+|mnb: |Mediator with zero-infalted negative bionomial (ZINB) distribution.|
 
-xm:  The interaction between exposure and mediator. User can defined it directly in the model fitting using the same way as thos in R package _glm_.
+|xm:  |The interaction between exposure and mediator. User can defined it directly in the model fitting using the same way as thos in R package _glm_.|
 
-im:  The indicator of zerl-inflated mediator, which is used for estimating decomposed Narutal Indirect Effect (NIE).
+|im:  |The indicator of zerl-inflated mediator, which is used for estimating decomposed Narutal Indirect Effect (NIE).|
 
-y:  The outcome variable.
-</pre>
+|y:  |The outcome variable.|
+
 ### Conduct mediation analysis 
 
 #### Set up priors
