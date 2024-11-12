@@ -1,1 +1,6 @@
 exportPattern("^[[:alpha:]]+")
+export(brms)
+export(datasim)
+export(mainfunction)
+export(run_function)
+export(scenarios)

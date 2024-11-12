@@ -1,11 +1,13 @@
 Package: mediationBayes
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Bayesian Mediation analysis approach
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Author: Jinhong Cui
+Maintainer: The package maintainer <jhcui@uab.edu>; <cuijinhongqk@gmail.com>
+Description: This R package provides a flexible Bayesian mediation analysis framework particularly suitable for zero-inflated data. 
+    Both zero-inflated mediators and zero-inflated outcomes are handled by this package, compatible with a wide range of outcome/mediator distributions. 
+    This novel technique employs Bayesian models for both the mediator and the outcome, utilizing Markov Chain Monte Carlo (MCMC) algorithms for parameter estimation. 
+    This method can be used to conduct mediation analysis with not only zero-inflated mediators but also a wide range of mediator and outcome distributions that can be fitted with GLMs.
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
