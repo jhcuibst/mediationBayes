@@ -651,13 +651,11 @@ cal.rr.effects.y <- function(outcome.pred, outcome.pred.zi = outcome.pred.zi)
   direct_treated = outcome.pred[2,2,1,,] / outcome.pred[1,2,1,,]
   indirect_control = outcome.pred[1,2,2,,] / outcome.pred[1,1,2,,]
   indirect_treated = outcome.pred[2,2,2,,] / outcome.pred[2,1,2,,]
+  indirect_Im = (1-outcome.pred.zi[2,2,2,,]) / (1-outcome.pred.zi[2,1,2,,])
 
   direct = (direct_control + direct_treated)/2
-  indirect = (indirect_control + indirect_treated)/2
-
-  # **************************************************
-  indirect_Im = (1-outcome.pred.zi[2,2,2,,]) / (1-outcome.pred.zi[2,1,2,,])
-  total = direct*indirect*indirect_Im
+  indirect = (indirect_control + indirect_treated)/2*indirect_Im
+  total = direct*indirect
   # **************************************************
   pmed = direct*(indirect-1)/(total-1)
 
@@ -716,15 +714,13 @@ cal.rd.effects.y <- function(outcome.pred, outcome.pred.zi = NULL)
   direct_treated = outcome.pred[2,2,1,,] - outcome.pred[1,2,1,,]
   indirect_control = outcome.pred[1,2,2,,] - outcome.pred[1,1,2,,]
   indirect_treated = outcome.pred[2,2,2,,] - outcome.pred[2,1,2,,]
+  indirect_Im = (1-outcome.pred.zi[2,2,2,,]) - (1-outcome.pred.zi[2,1,2,,])
 
   direct = (direct_control + direct_treated)/2
-  indirect = (indirect_control + indirect_treated)/2
-
+  indirect = (indirect_control + indirect_treated)/2 + indirect_Im
+  total = direct + indirect
   # **************************************************
-  indirect_Im = (1-outcome.pred.zi[2,2,2,,]) - (1-outcome.pred.zi[2,1,2,,])
-  total = direct+indirect+indirect_Im
-  # **************************************************
-  pmed = direct*(indirect-1)/(total-1)
+  pmed = indirect/total
 
   res = rbind(
     c(mean(indirect_control), median(indirect_control), sd(indirect_control),
