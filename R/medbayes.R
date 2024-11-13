@@ -645,7 +645,7 @@ cal.rr.effects.ind <- function(outcome.pred)
 
   res
 }
-cal.rr.effects.y <- function(outcome.pred, outcome.pred.zi = NULL)
+cal.rr.effects.y <- function(outcome.pred, outcome.pred.zi = outcome.pred.zi)
 {
   direct_control = outcome.pred[2,1,1,,] / outcome.pred[1,1,1,,]
   direct_treated = outcome.pred[2,2,1,,] / outcome.pred[1,2,1,,]
@@ -656,7 +656,7 @@ cal.rr.effects.y <- function(outcome.pred, outcome.pred.zi = NULL)
   indirect = (indirect_control + indirect_treated)/2
 
   # **************************************************
-  indirect_Im = outcome.pred.zi[2,2,2,,] / outcome.pred.zi[2,1,2,,]
+  indirect_Im = (1-outcome.pred.zi[2,2,2,,]) / (1-outcome.pred.zi[2,1,2,,])
   total = direct*indirect*indirect_Im
   # **************************************************
   pmed = direct*(indirect-1)/(total-1)
@@ -721,8 +721,8 @@ cal.rd.effects.y <- function(outcome.pred, outcome.pred.zi = NULL)
   indirect = (indirect_control + indirect_treated)/2
 
   # **************************************************
-  indirect_Im = outcome.pred.zi[2,2,2,,] - outcome.pred.zi[2,1,2,,]
-  total = direct*indirect*indirect_Im
+  indirect_Im = (1-outcome.pred.zi[2,2,2,,]) - (1-outcome.pred.zi[2,1,2,,])
+  total = direct+indirect+indirect_Im
   # **************************************************
   pmed = direct*(indirect-1)/(total-1)
 
