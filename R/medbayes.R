@@ -316,11 +316,11 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
   if(y_link == "logit")     outcome.pred  = exp(outcome.linpred)/(1+exp(outcome.linpred))
 
   zi.outcome = grepl("zero", family(model.y)$family) | grepl("hurdle", family(model.y)$family)
-  if(zi.outcome & y_link == "log"){
+  if(zi.outcome ){
     outcome.pred.mu  = exp(outcome.linpred.mu)
     outcome.pred.zi  = exp(outcome.linpred.zi)/(1+exp(outcome.linpred.zi))
     outcome.pred.overall  = outcome.pred.mu*(1-outcome.pred.zi)
-  }else if(!(zi.outcome) & y_link == "log"){
+  }else if(!(zi.outcome)){
     outcome.pred  = exp(outcome.linpred)
   }
 
@@ -334,17 +334,14 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
 
     } else if(zi.outcome){
 
-      res.mu.rr = cal.rr.effects.ind(outcome.pred.mu)
-      res.zi.rr = cal.rr.effects.ind(outcome.pred.zi)
-      res.overall.rr = cal.rr.effects.ind(outcome.pred.overall)
-      res.rr <- list(effects.mu.rr = res.mu.rr, effects.zi.rr = res.zi.rr, effects.overall.rr = res.overall.rr)
+      res.mu.zi = cal.rr.effects.y(outcome.pred.mu, outcome.pred.zi)
+      res.rr <- list(effects.mu.rr = res.mu.zi)
 
-      res.mu.rd = cal.rd.effects.ind(outcome.pred.mu)
-      res.zi.rd = cal.rd.effects.ind(outcome.pred.zi)
-      res.overall.rd = cal.effects.ind(outcome.pred.overall)
-      res.rd <- list(effects.mu.rd = res.mu.rd, effects.zi.rd = res.zi.rd, effects.overall.rd = res.overall.rd)
+      res.mu.zi = cal.rd.effects.y(outcome.pred.mu, outcome.pred.zi)
+      res.rd <- list(effects.mu.rd = res.mu.zi)
       rst <- list(effects.rd = res.rd, effects.rr = res.rr, outcome.linpred.mu=outcome.linpred.mu, outcome.linpred.zi=outcome.linpred.zi)
-    }else{
+
+      }else{
       res = cal.rd.effects.ind(outcome.pred)
       rst <- list(effects = res, outcome.linpred=outcome.linpred, outcome.pred = outcome.pred)
     }
@@ -357,18 +354,9 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
       rst <- list(effects.rd = res.rd, effects.rr = res.rr, outcome.linpred=outcome.linpred, outcome.pred = outcome.pred)
     } else if(zi.outcome){
 
-      # res.mu.rr = cal.rr.effects(outcome.pred.mu)
-      # res.zi.rr = cal.rr.effects(outcome.pred.zi)
-      # res.overall.rr = cal.rr.effects(outcome.pred.overall)
-      # res.rr <- list(effects.mu.rr = res.mu.rr, effects.zi.rr = res.zi.rr, effects.overall.rr = res.overall.rr)
       res.mu.zi = cal.rr.effects.y(outcome.pred.mu, outcome.pred.zi)
       res.rr <- list(effects.mu.rr = res.mu.zi)
 
-      # res.mu.rd = cal.rd.effects(outcome.pred.mu)
-      # res.zi.rd = cal.rd.effects(outcome.pred.zi)
-      # res.overall.rd = cal.rd.effects(outcome.pred.overall)
-      # res.rd <- list(effects.mu.rd = res.mu.rd, effects.zi.rd = res.zi.rd, effects.overall.rd = res.overall.rd)
-      # rst <- list(effects.rd = res.rd, effects.rr = res.rr, outcome.linpred.mu=outcome.linpred.mu, outcome.linpred.zi=outcome.linpred.zi)
       res.mu.zi = cal.rd.effects.y(outcome.pred.mu, outcome.pred.zi)
       res.rd <- list(effects.mu.rd = res.mu.zi)
       rst <- list(effects.rd = res.rd, effects.rr = res.rr, outcome.linpred.mu=outcome.linpred.mu, outcome.linpred.zi=outcome.linpred.zi)
@@ -649,11 +637,13 @@ cal.rr.effects.y <- function(outcome.pred, outcome.pred.zi = outcome.pred.zi)
 {
   direct_control = outcome.pred[2,1,1,,] / outcome.pred[1,1,1,,]
   direct_treated = outcome.pred[2,2,1,,] / outcome.pred[1,2,1,,]
+  direct_Im = (1-outcome.pred.zi[2,1,1,,]) / (1-outcome.pred.zi[1,1,1,,])
+
   indirect_control = outcome.pred[1,2,2,,] / outcome.pred[1,1,2,,]
   indirect_treated = outcome.pred[2,2,2,,] / outcome.pred[2,1,2,,]
   indirect_Im = (1-outcome.pred.zi[2,2,2,,]) / (1-outcome.pred.zi[2,1,2,,])
 
-  direct = (direct_control + direct_treated)/2
+  direct = (direct_control + direct_treated)/2*direct_Im
   indirect = (indirect_control + indirect_treated)/2*indirect_Im
   total = direct*indirect
   # **************************************************
@@ -712,11 +702,13 @@ cal.rd.effects.y <- function(outcome.pred, outcome.pred.zi = NULL)
 {
   direct_control = outcome.pred[2,1,1,,] - outcome.pred[1,1,1,,]
   direct_treated = outcome.pred[2,2,1,,] - outcome.pred[1,2,1,,]
+  direct_Im = (1-outcome.pred.zi[2,1,1,,]) / (1-outcome.pred.zi[1,1,1,,])
+
   indirect_control = outcome.pred[1,2,2,,] - outcome.pred[1,1,2,,]
   indirect_treated = outcome.pred[2,2,2,,] - outcome.pred[2,1,2,,]
   indirect_Im = (1-outcome.pred.zi[2,2,2,,]) - (1-outcome.pred.zi[2,1,2,,])
 
-  direct = (direct_control + direct_treated)/2
+  direct = (direct_control + direct_treated)/2 +direct_Im
   indirect = (indirect_control + indirect_treated)/2 + indirect_Im
   total = direct + indirect
   # **************************************************
