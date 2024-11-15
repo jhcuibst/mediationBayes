@@ -643,10 +643,14 @@ cal.rr.effects.y <- function(outcome.pred, outcome.pred.zi = outcome.pred.zi)
 
   indirect_control = outcome.pred[1,2,2,,] / outcome.pred[1,1,2,,]
   indirect_treated = outcome.pred[2,2,2,,] / outcome.pred[2,1,2,,]
-  indirect_Im = (1-outcome.pred.zi[2,2,2,,]) / (1-outcome.pred.zi[2,1,2,,])
+
+  indirect_Im_t = (1-outcome.pred.zi[2,2,2,,]) / (1-outcome.pred.zi[2,1,2,,])
+  indirect_Im_c = (1-outcome.pred.zi[1,2,2,,]) / (1-outcome.pred.zi[1,1,2,,])
+
+  indirect_Im = (indirect_Im_t + indirect_Im_c)/2
 
   direct = (direct_control + direct_treated)/2
-  indirect = (indirect_control + indirect_treated)/2*indirect_Im
+  indirect = (indirect_control + indirect_treated)/2*indirect_Im_t
   total = direct*indirect
   # **************************************************
   pmed = direct*(indirect-1)/(total-1)
@@ -661,8 +665,12 @@ cal.rr.effects.y <- function(outcome.pred, outcome.pred.zi = outcome.pred.zi)
       2*min(mean(indirect_treated<1), mean(indirect_treated>1))),
 
     # *******************************************************
-    c(mean(indirect_Im), median(indirect_Im), sd(indirect_Im),
-      quantile(indirect_Im, probs=c(0.025,0.975), na.rm = T),
+    c(mean(indirect_Im_c), median(indirect_Im_c), sd(indirect_Im_c),
+      quantile(indirect_Im_c, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(indirect_Im<1), mean(indirect_Im>1))),
+
+    c(mean(indirect_Im_t), median(indirect_Im_t), sd(indirect_Im_t),
+      quantile(indirect_Im_t, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(indirect_Im<1), mean(indirect_Im>1))),
     # *******************************************************
 
@@ -674,17 +682,22 @@ cal.rr.effects.y <- function(outcome.pred, outcome.pred.zi = outcome.pred.zi)
       quantile(direct_treated, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(direct_treated<1), mean(direct_treated>1))),
 
-    c(mean(total), median(total), sd(total),
-      quantile(total, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(total<1), mean(total>1))),
 
     c(mean(indirect), median(indirect), sd(indirect),
       quantile(indirect, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(indirect<1), mean(indirect>1))),
 
+    c(mean(indirect_Im), median(indirect_Im), sd(indirect_Im),
+      quantile(indirect_Im, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(indirect_Im<1), mean(indirect_Im>1))),
+
     c(mean(direct), median(direct), sd(direct),
       quantile(direct, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(direct<1), mean(direct>1))),
+
+    c(mean(total), median(total), sd(total),
+      quantile(total, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(total<1), mean(total>1))),
 
     c(mean(pmed), median(pmed), sd(pmed),
       quantile(pmed, probs=c(0.025,0.975), na.rm = T),
@@ -693,23 +706,26 @@ cal.rr.effects.y <- function(outcome.pred, outcome.pred.zi = outcome.pred.zi)
   res[,1:5] = round(res[,1:5], digits=3)
   res[,6] = signif(res[,6], digits=2)
   res[9,1] = ifelse(res[9,1] < 0, 0, res[9,1] )
-  rownames(res) = c("Indirect_control", "Indirect_treated", "Indirect_Z",
+  rownames(res) = c("Indirect_control", "Indirect_treated", "Indirect_Z_control","Indirect_Z_treated",
                     "Direct_control", "Direct_treated",
-                    "Total Effect", "Indirect", "Direct", "Prop.Med")
+                   "Indirect", "Indirect_Z","Direct",  "Total Effect", "Prop.Med")
   colnames(res) = c("Mean", "Median", "SD", "l-95% CI", "u-95% CI", "Bayes_p")
 
   res
 }
 cal.rd.effects.y <- function(outcome.pred, outcome.pred.zi = NULL)
 {
-  direct_Im = (1-outcome.pred.zi[2,1,1,,]) / (1-outcome.pred.zi[1,1,1,,])
-  direct_control = (outcome.pred[2,1,1,,] / outcome.pred[1,1,1,,]) + direct_Im
-  direct_treated = (outcome.pred[2,2,1,,] / outcome.pred[1,2,1,,]) + direct_Im
+  direct_Im = (1-outcome.pred.zi[2,1,1,,]) - (1-outcome.pred.zi[1,1,1,,])
+  direct_control = (outcome.pred[2,1,1,,] - outcome.pred[1,1,1,,]) + direct_Im
+  direct_treated = (outcome.pred[2,2,1,,] - outcome.pred[1,2,1,,]) + direct_Im
 
   indirect_control = outcome.pred[1,2,2,,] - outcome.pred[1,1,2,,]
   indirect_treated = outcome.pred[2,2,2,,] - outcome.pred[2,1,2,,]
-  indirect_Im = (1-outcome.pred.zi[2,2,2,,]) - (1-outcome.pred.zi[2,1,2,,])
 
+  indirect_Im_t = (1-outcome.pred.zi[2,2,2,,]) - (1-outcome.pred.zi[2,1,2,,])
+  indirect_Im_c = (1-outcome.pred.zi[1,2,2,,]) - (1-outcome.pred.zi[1,1,2,,])
+
+  indirect_Im = (indirect_Im_t + indirect_Im_c)/2
   direct = (direct_control + direct_treated)/2
   indirect = (indirect_control + indirect_treated)/2 + indirect_Im
   total = direct + indirect
@@ -726,8 +742,12 @@ cal.rd.effects.y <- function(outcome.pred, outcome.pred.zi = NULL)
       2*min(mean(indirect_treated<1), mean(indirect_treated>1))),
 
     # *******************************************************
-    c(mean(indirect_Im), median(indirect_Im), sd(indirect_Im),
-      quantile(indirect_Im, probs=c(0.025,0.975), na.rm = T),
+    c(mean(indirect_Im_c), median(indirect_Im_c), sd(indirect_Im_c),
+      quantile(indirect_Im_c, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(indirect_Im<1), mean(indirect_Im>1))),
+
+    c(mean(indirect_Im_t), median(indirect_Im_t), sd(indirect_Im_t),
+      quantile(indirect_Im_t, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(indirect_Im<1), mean(indirect_Im>1))),
     # *******************************************************
 
@@ -739,17 +759,22 @@ cal.rd.effects.y <- function(outcome.pred, outcome.pred.zi = NULL)
       quantile(direct_treated, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(direct_treated<1), mean(direct_treated>1))),
 
-    c(mean(total), median(total), sd(total),
-      quantile(total, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(total<1), mean(total>1))),
 
     c(mean(indirect), median(indirect), sd(indirect),
       quantile(indirect, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(indirect<1), mean(indirect>1))),
 
+    c(mean(indirect_Im), median(indirect_Im), sd(indirect_Im),
+      quantile(indirect_Im, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(indirect_Im<1), mean(indirect_Im>1))),
+
     c(mean(direct), median(direct), sd(direct),
       quantile(direct, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(direct<1), mean(direct>1))),
+
+    c(mean(total), median(total), sd(total),
+      quantile(total, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(total<1), mean(total>1))),
 
     c(mean(pmed), median(pmed), sd(pmed),
       quantile(pmed, probs=c(0.025,0.975), na.rm = T),
@@ -758,9 +783,9 @@ cal.rd.effects.y <- function(outcome.pred, outcome.pred.zi = NULL)
   res[,1:5] = round(res[,1:5], digits=3)
   res[,6] = signif(res[,6], digits=2)
   res[9,1] = ifelse(res[9,1] < 0, 0, res[9,1] )
-  rownames(res) = c("Indirect_control", "Indirect_treated", "Indirect_Z",
+  rownames(res) = c("Indirect_control", "Indirect_treated", "Indirect_Z_control","Indirect_Z_treated",
                     "Direct_control", "Direct_treated",
-                    "Total Effect", "Indirect", "Direct", "Prop.Med")
+                    "Indirect", "Indirect_Z","Direct",  "Total Effect", "Prop.Med")
   colnames(res) = c("Mean", "Median", "SD", "l-95% CI", "u-95% CI", "Bayes_p")
 
   res
