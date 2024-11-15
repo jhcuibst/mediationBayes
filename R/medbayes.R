@@ -93,14 +93,6 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
     }
   }
 
-  # *********************************************************************
-  # ----------------
-  # if(logM){
-  #   predict.ind_ms = ifelse(predict.ind_ms == 0, 0.001, predict.ind_ms)
-  #   predict.ind_ms = log(predict.ind_ms)
-  # }
-  # *********************************************************************-----
-
   dat.y = model.y$data
   ef_y = as_draws_df(model.y)
 
@@ -637,9 +629,10 @@ cal.rr.effects.ind <- function(outcome.pred)
 }
 cal.rr.effects.y <- function(outcome.pred, outcome.pred.zi = outcome.pred.zi)
 {
-  direct_Im = (1-outcome.pred.zi[2,1,1,,]) / (1-outcome.pred.zi[1,1,1,,])
-  direct_control = (outcome.pred[2,1,1,,] / outcome.pred[1,1,1,,])*direct_Im
-  direct_treated = (outcome.pred[2,2,1,,] / outcome.pred[1,2,1,,])*direct_Im
+  direct_Im_c = (1-outcome.pred.zi[2,1,1,,]) / (1-outcome.pred.zi[1,1,1,,])
+  direct_Im_t = (1-outcome.pred.zi[2,2,1,,]) / (1-outcome.pred.zi[1,2,1,,])
+  direct_control = (outcome.pred[2,1,1,,] / outcome.pred[1,1,1,,])*direct_Im_c
+  direct_treated = (outcome.pred[2,2,1,,] / outcome.pred[1,2,1,,])*direct_Im_t
 
   indirect_control = outcome.pred[1,2,2,,] / outcome.pred[1,1,2,,]
   indirect_treated = outcome.pred[2,2,2,,] / outcome.pred[2,1,2,,]
@@ -650,8 +643,8 @@ cal.rr.effects.y <- function(outcome.pred, outcome.pred.zi = outcome.pred.zi)
   indirect_Im = (indirect_Im_t + indirect_Im_c)/2
 
   direct = (direct_control + direct_treated)/2
-  indirect = (indirect_control + indirect_treated)/2*indirect_Im_t
-  total = direct*indirect
+  indirect = (indirect_control + indirect_treated)/2
+  total = direct*indirect*indirect_Im
   # **************************************************
   pmed = direct*(indirect-1)/(total-1)
 
@@ -706,10 +699,12 @@ cal.rr.effects.y <- function(outcome.pred, outcome.pred.zi = outcome.pred.zi)
   res[,1:5] = round(res[,1:5], digits=3)
   res[,6] = signif(res[,6], digits=2)
   res[9,1] = ifelse(res[9,1] < 0, 0, res[9,1] )
-  rownames(res) = c("Indirect_control", "Indirect_treated", "Indirect_Z_control","Indirect_Z_treated",
+  rownames(res) = c("Indirect_NZ_control", "Indirect_NZ_treated", "Indirect_Z_control","Indirect_Z_treated",
                     "Direct_control", "Direct_treated",
                    "Indirect", "Indirect_Z","Direct",  "Total Effect", "Prop.Med")
   colnames(res) = c("Mean", "Median", "SD", "l-95% CI", "u-95% CI", "Bayes_p")
+  res <- res[c("Indirect_NZ_treated", "Indirect_Z_treated", "Direct_control", "Total Effect", "Prop.Med"),]
+  rownames(res) = c("NIE_NZ", "NIE_Z", "NDE", "Total Effect", "Prop.Med")
 
   res
 }
