@@ -646,7 +646,7 @@ cal.rr.effects.y <- function(outcome.pred, outcome.pred.zi = outcome.pred.zi)
   indirect = (indirect_control + indirect_treated)/2
   total = direct*indirect*indirect_Im
   # **************************************************
-  pmed = direct*(indirect-1)/(total-1)
+  pmed = direct*(indirect*indirect_Im-1)/(total-1)
 
   res = rbind(
     c(mean(indirect_control), median(indirect_control), sd(indirect_control),
