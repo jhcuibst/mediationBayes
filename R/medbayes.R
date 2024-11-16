@@ -830,3 +830,5 @@ cal.rd.effects.y <- function(outcome.pred, outcome.pred.zi = NULL)
 
   res
 }
+
+
