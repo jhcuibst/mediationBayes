@@ -1,7 +1,6 @@
 
 library(brms)
 # **************************************************
-# This function only for zero-inflated mediator iwth hurdle model
 medbayes <- function(model.m = hnb.m, model.y = hnb.y,
                      treat = "treatment", mediator = "mediator", ind_mediator = NULL, outcome = "outcome",
                      control.value = 0, treat.value = 1,
@@ -35,7 +34,7 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
   # ----------------
   dat.new = model.m$data
 
-  if (family(model.m)$family %in% c("hurdle_negbinomial", "hurdle_poisson")){
+  # if (family(model.m)$family %in% c("hurdle_negbinomial", "hurdle_poisson")){
     dpar.m = c("mu", "hu")
     predict.ms <- array(NA, dim = c(2, ndraws(model.m), nrow(dat.new)))
     for(i in 1:length(value)){
@@ -55,41 +54,8 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
     }else{
       predict.ind_ms <- array(0, dim = c(2, ndraws(model.m), nrow(dat.new)))
     }
-  }
 
-  # TBD ----------------
-  if (family(model.m)$family %in% c("zero_inflated_negbinomial", "zero_inflated_poisson")){
-    dpar.m = c("mu", "zi")
-    predict.ms <- array(NA, dim = c(2, ndraws(model.m), nrow(dat.new)))
-    for(i in 1:length(value)){
-      dat.new[, treat] = value[i]
-      predict.ms[i,,] = 0
-      predict.ms[i,,] = posterior_epred(model.m, newdata = dat.new, dpar = NULL)
-    }
 
-    if(!is.null(ind_mediator)){
-      predict.ind_ms <- array(NA, dim = c(2, ndraws(model.m), nrow(dat.new)))
-      for(i in 1:length(value)){
-        dat.new[, treat] = value[i]
-        predict.ind_ms[i,,] = 0
-        predict.ind_ms[i,,] = 1 - posterior_epred(model.m, newdata = dat.new, dpar = dpar.m[2])
-      }
-    }else{
-      predict.ind_ms <- array(0, dim = c(2, ndraws(model.m), nrow(dat.new)))
-    }
-  }
-
-  # If model.m not belong to ZI/HU models ----------------
-  hu.models = c("hurdle_negbinomial", "hurdle_poisson","zero_inflated_negbinomial", "zero_inflated_poisson")
-  if (!(family(model.m)$family %in% hu.models)) {
-    predict.ms <- array(NA, dim = c(2, ndraws(model.m), nrow(dat.new)))
-    predict.ind_ms <- array(0, dim = c(2, ndraws(model.m), nrow(dat.new)))
-    for(i in 1:length(value)){
-      dat.new[, treat] = value[i]
-      predict.ms[i,,] = 0
-      predict.ms[i,,] = posterior_epred(model.m, newdata = dat.new, resp = mediator)
-    }
-  }
 
   dat.y = model.y$data
   ef_y = as_draws_df(model.y)
@@ -105,17 +71,13 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
   predict.y.cov.zi <- array(NA, dim = c(2, ndraws(model.y), nrow(dat.y)) )
 
   for(i in 1:length(value)){
-    dat.y[, treat] = value[i]
-    dat.y[, mediator] = 0
-    predict.y.cov.mu[i,,] = 0
-    predict.y.cov.zi[i,,] = 0
-    predict.y.cov[i,,] = 0
+    dat.y.temp <- dat.y
+    dat.y.temp[, treat] <- value[i]
+    dat.y.temp[, mediator] = 0
 
     if( zi.outcome  ){
-      predict.y.cov.mu[i,,] = posterior_linpred(model.y, newdata = dat.y, dpar = depar.outcome[1])
-      predict.y.cov.zi[i,,] = posterior_linpred(model.y, newdata = dat.y, dpar = depar.outcome[2])
-      predict.y.cov[i,,]    = posterior_linpred(model.y, newdata = dat.y)
-
+      predict.y.cov.mu[i,,] = posterior_linpred(model.y, newdata = dat.y.temp, dpar = depar.outcome[1])
+      predict.y.cov.zi[i,,] = posterior_linpred(model.y, newdata = dat.y.temp, dpar = depar.outcome[2])
     }else{
       predict.y.cov[i,,] = posterior_linpred(model.y, newdata = dat.y)
     }
@@ -157,19 +119,15 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
   #******** wait to check interaction in the ZI-outcome model within ZI part *********
   #*
   INT.xm <- c(paste("b_", treat, ":", mediator, sep="") %in% colnames(as.matrix(model.y)),
-              paste("b_", mediator, ":", treat, sep="") %in% colnames(as.matrix(model.y))
-  )
+              paste("b_", mediator, ":", treat, sep="") %in% colnames(as.matrix(model.y))  )
   INT.xIm <- c(paste("b_", treat, ":", ind_mediator, sep="") %in% colnames(as.matrix(model.y)) ,
-               paste("b_", ind_mediator, ":", treat, sep="") %in% colnames(as.matrix(model.y))
-  )
+               paste("b_", ind_mediator, ":", treat, sep="") %in% colnames(as.matrix(model.y))  )
 
   INT.xm_hu <- c(paste("b_hu_", treat, ":", mediator, sep="") %in% colnames(as.matrix(model.y)) ,
-                 paste("b_hu_", mediator, ":", treat, sep="") %in% colnames(as.matrix(model.y))
-  )
+                 paste("b_hu_", mediator, ":", treat, sep="") %in% colnames(as.matrix(model.y))  )
 
-  INT.xm_zi <- c(paste("b_zi", treat, ":", mediator, sep="") %in% colnames(as.matrix(model.y)) ,
-                 paste("b_zi", mediator, ":", treat, sep="") %in% colnames(as.matrix(model.y))
-  )
+  INT.xm_zi <- c(paste("b_zi_", treat, ":", mediator, sep="") %in% colnames(as.matrix(model.y)) ,
+                 paste("b_zi_", mediator, ":", treat, sep="") %in% colnames(as.matrix(model.y))  )
 
   # if(any(INT.xm, INT.xIm)){
   coef.intxm = c(paste("b_", treat, ":", mediator, sep=""), paste("b_", mediator, ":", treat, sep="")  )
@@ -204,6 +162,7 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
   } else{
     bxm_zi = 0
   }
+
   if(int_of_xIm ) {
     bxIm = as.matrix(ef_y)[,coef.intxIm]
   } else {
@@ -229,7 +188,6 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
               suppressWarnings(as.numeric(as.matrix(predict.ms[j,,]*b_zi_m) + as.matrix(bxm_zi*value[i]*predict.ms[j,,]) +
                                             as.matrix(b_zi_indm *predict.ind_ms[r,,] + bxIm*value[i]*predict.ind_ms[r,,]) ) +
                                  predict.y.cov.zi[i,,])
-            outcome.linpred[i,j,r,,] = outcome.linpred.mu[i,j,r,,]*(1-outcome.linpred.zi[i,j,r,,])
           }else{
             outcome.linpred[i,j,r,,] =
               suppressWarnings(as.numeric(as.matrix(predict.ms[j,,]*bm) + as.matrix(bxm*value[i]*predict.ms[j,,]) +
@@ -254,7 +212,6 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
             outcome.linpred.zi[i,j,r,,] =
               suppressWarnings(as.numeric(as.matrix(predict.ms[j,,]*b_zi_m) + as.matrix(bxm_zi*value[i]*predict.ms[j,,]) +
                                             as.matrix(b_zi_indm *predict.ind_ms[r,,])) + predict.y.cov.zi[i,,])
-            outcome.linpred[i,j,r,,] = outcome.linpred.mu[i,j,r,,]*(1-outcome.linpred.zi[i,j,r,,])
           }else{
             outcome.linpred[i,j,r,,] =
               suppressWarnings(as.numeric(as.matrix(predict.ms[j,,]*bm) + as.matrix(bxm*value[i]*predict.ms[j,,]) +
@@ -279,8 +236,7 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
                   predict.y.cov.mu[i,,] )
             outcome.linpred.zi[i,j,r,,] =
               suppressWarnings(as.numeric(as.matrix(predict.ms[j,,]*b_zi_m) + as.matrix(b_zi_indm *predict.ind_ms[r,,]
-                                                                                        + bxIm*value[i]*predict.ind_ms[r,,]) ) + predict.y.cov.zi[i,,])
-            outcome.linpred[i,j,r,,] = outcome.linpred.mu[i,j,r,,]*(1-outcome.linpred.zi[i,j,r,,])
+                                          + bxIm*value[i]*predict.ind_ms[r,,]) ) + predict.y.cov.zi[i,,])
           }else{
             outcome.linpred[i,j,r,,] =
               suppressWarnings(as.numeric(as.matrix(predict.ms[j,,]*bm) + as.matrix(bxm*value[i]*predict.ms[j,,]) +
@@ -326,10 +282,9 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
   # ----
   y_link = family(model.y)$link
 
-  if(y_link == "identity")  outcome.pred = outcome.linpred
-  if(y_link == "logit")     outcome.pred  = exp(outcome.linpred)/(1+exp(outcome.linpred))
-
   zi.outcome = grepl("zero", family(model.y)$family) | grepl("hurdle", family(model.y)$family)
+  if(y_link == "identity" & !(zi.outcome))  outcome.pred = outcome.linpred
+  if(y_link == "logit"& !(zi.outcome))     outcome.pred  = exp(outcome.linpred)/(1+exp(outcome.linpred))
 
   if(zi.outcome ){
     outcome.pred.mu  = exp(outcome.linpred.mu)
@@ -368,10 +323,11 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
       rst <- list(effects.rd = res.rd, effects.rr = res.rr, outcome.linpred=outcome.linpred, outcome.pred = outcome.pred)
     } else if(zi.outcome){
 
-      res.mu.zi = cal.rr.effects.y(outcome.pred.mu, outcome.pred.zi)
-      res.rr <- list(effects.mu.rr = res.mu.zi)
+      res.rr  = cal.rr.effects.y(outcome.pred.mu, outcome.pred.zi)
+      # res.mu.zi = cal.rr.effects.y(outcome.pred.mu, outcome.pred.zi, outcome.pred.overall)
+      # res.rr <- list(effects.mu.rr = res.mu.zi)
 
-      res.mu.zi = cal.rd.effects.y(outcome.pred.mu, outcome.pred.zi)
+      # res.mu.zi = cal.rd.effects.y(outcome.pred.mu, outcome.pred.zi)
       res.rd <- list(effects.mu.rd = res.mu.zi)
       rst <- list(effects.rd = res.rd, effects.rr = res.rr, outcome.linpred.mu=outcome.linpred.mu,
                   outcome.linpred.zi=outcome.linpred.zi,
@@ -649,204 +605,222 @@ cal.rr.effects.ind <- function(outcome.pred)
 
   res
 }
-cal.rr.effects.y <- function(outcome.pred, outcome.pred.zi = outcome.pred.zi)
+cal.rr.effects.y <- function(outcome.pred = outcome.pred.mu, outcome.pred.zi = outcome.pred.zi)
 {
-  direct_Im_c = (1-outcome.pred.zi[2,1,1,,]) / (1-outcome.pred.zi[1,1,1,,])
-  direct_Im_t = (1-outcome.pred.zi[2,2,1,,]) / (1-outcome.pred.zi[1,2,1,,])
-  direct_control = (outcome.pred[2,1,2,,] / outcome.pred[1,1,2,,])
+  direct_control = (outcome.pred [2,1,2,,] / outcome.pred [1,1,2,,])
   direct_treated = (outcome.pred[2,2,2,,] / outcome.pred[1,2,2,,])
+  direct_Im_c = (1-outcome.pred.zi[2,1,2,,]) / (1-outcome.pred.zi[1,1,2,,])
+  direct_Im_t = (1-outcome.pred.zi[2,2,2,,]) / (1-outcome.pred.zi[1,2,2,,])
 
   indirect_control = outcome.pred[1,2,2,,] / outcome.pred[1,1,2,,]
   indirect_treated = outcome.pred[2,2,2,,] / outcome.pred[2,1,2,,]
-
   indirect_Im_t = (1-outcome.pred.zi[2,2,2,,]) / (1-outcome.pred.zi[2,1,2,,])
   indirect_Im_c = (1-outcome.pred.zi[1,2,2,,]) / (1-outcome.pred.zi[1,1,2,,])
 
-  direct = (direct_control + direct_treated)/2      # avg_NDE
-  indirect = (indirect_control + indirect_treated)/2 # avg_NIE_NZ
-  indirect_Im = (indirect_Im_t + indirect_Im_c)/2    # avg_NIE_Z
-  avg_indirect = indirect * indirect_Im
+  direct.c_total = median(direct_control) * median(direct_Im_c)
+  direct.t_total = median(direct_treated) * median(direct_Im_t)
+  indirect.c_total = mean(indirect_control)*mean(indirect_Im_c)
+  indirect.t_total = mean(indirect_treated)*mean(indirect_Im_t)
 
-  indirect_t = indirect_treated*indirect_Im_t
-  total = direct_control*indirect_treated*indirect_Im
-  total_avg = direct*indirect*indirect_Im
+  direct_avg = (direct.c_total + direct.t_total)/2
+  indirect_nz_avg = (indirect_control + indirect_treated)/2
+  indirect_z_avg  = (indirect_Im_t + indirect_Im_c)/2
+
+  total = direct.c_total*indirect.t_total
+  total_avg = direct_avg*indirect_nz_avg*indirect_z_avg
+
+  d_avg = (direct_control*direct_Im_c + direct_treated*direct_Im_t)/2
+  i_avg = (indirect_control*indirect_Im_c + indirect_treated*indirect_Im_t)/2
 
   # **************************************************
-  pmed = direct_control*(indirect_treated*indirect_Im-1)/(direct_control*indirect_treated*indirect_Im-1)
+  pmed = direct.c_total*(indirect_treated*indirect_Im_t-1)/(direct.c_total*indirect_treated*indirect_Im_t-1)
+
 
   res = rbind(
-    c(mean(indirect_control), median(indirect_control), sd(indirect_control),
-      quantile(indirect_control, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(indirect_control<1), mean(indirect_control>1))),
-
-    c(mean(indirect_treated), median(indirect_treated), sd(indirect_treated),
-      quantile(indirect_treated, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(indirect_treated<1), mean(indirect_treated>1))),
-
-    # *******************************************************
-    c(mean(indirect_Im_c), median(indirect_Im_c), sd(indirect_Im_c),
-      quantile(indirect_Im_c, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(indirect_Im<1), mean(indirect_Im>1))),
-
-    c(mean(indirect_Im_t), median(indirect_Im_t), sd(indirect_Im_t),
-      quantile(indirect_Im_t, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(indirect_Im<1), mean(indirect_Im>1))),
-    # *******************************************************
-
     c(mean(direct_control), median(direct_control), sd(direct_control),
       quantile(direct_control, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(direct_control<1), mean(direct_control>1))),
-
     c(mean(direct_treated), median(direct_treated), sd(direct_treated),
       quantile(direct_treated, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(direct_treated<1), mean(direct_treated>1))),
+    c(mean(direct_Im_c), median(direct_Im_c), sd(direct_Im_c),
+      quantile(direct_Im_c, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(direct_Im_c<1), mean(direct_Im_c>1))),
+    c(mean(direct_Im_t), median(direct_Im_t), sd(direct_Im_t),
+      quantile(direct_Im_t, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(direct_Im_t<1), mean(direct_Im_t>1))),
+    # **************************************************
 
-    # *******************************************************
-    c(mean(indirect_t), median(indirect_t), sd(indirect_t),      # NIE.t = NIE_NZ.t * NIE_Z.t
-      quantile(indirect_t, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(indirect_t<1), mean(indirect_t>1))),
+    c(mean(indirect_control), median(indirect_control), sd(indirect_control),
+      quantile(indirect_control, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(indirect_control<1), mean(indirect_control>1))),
+    c(mean(indirect_treated), median(indirect_treated), sd(indirect_treated),
+      quantile(indirect_treated, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(indirect_treated<1), mean(indirect_treated>1))),
+    c(mean(indirect_Im_c), median(indirect_Im_c), sd(indirect_Im_c),
+      quantile(indirect_Im_c, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(indirect_Im_c<1), mean(indirect_Im_c>1))),
+    c(mean(indirect_Im_t), median(indirect_Im_t), sd(indirect_Im_t),
+      quantile(indirect_Im_t, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(indirect_Im_t<1), mean(indirect_Im_t>1))),
+    # **************************************************
 
-    c(mean(indirect), median(indirect), sd(indirect),            # Avg_indirect_NZ
-      quantile(indirect, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(indirect<1), mean(indirect>1))),
+    c(mean(direct.c_total), median(direct.c_total), sd(direct_control*direct_Im_c),
+      quantile(direct_control*direct_Im_c, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(direct_control*direct_Im_c<1), mean(direct_control*direct_Im_c>1))),
+    c(mean(direct.t_total), median(direct.t_total), sd(direct_treated*direct_Im_t),
+      quantile(direct_treated*direct_Im_t, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(direct_treated*direct_Im_t<1), mean(direct_treated*direct_Im_t>1))),
+    c(mean(indirect.c_total), median(indirect.c_total), sd(indirect_control*indirect_Im_c),
+      quantile(indirect_control*indirect_Im_c, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(indirect_control*indirect_Im_c<1), mean(indirect_control*indirect_Im_c>1))),
+    c(mean(indirect.t_total), median(indirect.t_total), sd(indirect_treated*indirect_Im_t),
+      quantile(indirect_treated*indirect_Im_t, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(indirect_treated*indirect_Im_t<1), mean(indirect_treated*indirect_Im_t>1))),
+    # **************************************************
 
-    c(mean(indirect_Im), median(indirect_Im), sd(indirect_Im), # Avg_indirect_Z
-      quantile(indirect_Im, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(indirect_Im<1), mean(indirect_Im>1))),
+    c(mean(direct_avg), median(direct_avg), sd((direct_control*direct_Im_c+  direct_treated*direct_Im_t)/2),
+      quantile((direct_control*direct_Im_c+  direct_treated*direct_Im_t)/2, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean((direct_control*direct_Im_c+  direct_treated*direct_Im_t)/2<1),
+            mean((direct_control*direct_Im_c+  direct_treated*direct_Im_t)/2>1))),
+    c(mean(indirect_nz_avg), median(indirect_nz_avg), sd(indirect_nz_avg),
+      quantile(indirect_nz_avg, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(indirect_nz_avg<1), mean(indirect_nz_avg>1))),
+    c(mean(indirect_z_avg), median(indirect_z_avg), sd(indirect_z_avg),
+      quantile(indirect_z_avg, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(indirect_z_avg<1), mean(indirect_z_avg>1))),
+    # **************************************************
 
-    c(mean(avg_indirect), median(avg_indirect), sd(avg_indirect), # Avg_indirect
-      quantile(avg_indirect, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(avg_indirect<1), mean(avg_indirect>1))),
-
-    c(mean(direct), median(direct), sd(direct),
-      quantile(direct, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(direct<1), mean(direct>1))),
-
-    c(mean(total), median(total), sd(total),
-      quantile(total, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(total<1), mean(total>1))),
-
-    c(mean(total_avg), median(total_avg), sd(total_avg),
-      quantile(total_avg, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(total_avg<1), mean(total_avg>1))),
+    c(mean(total), median(total), sd(direct_control*direct_Im_c*indirect_treated*indirect_Im_t),
+      quantile(direct_control*direct_Im_c*indirect_treated*indirect_Im_t, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(direct_control*direct_Im_c*indirect_treated*indirect_Im_t<1),
+            mean(direct_control*direct_Im_c*indirect_treated*indirect_Im_t>1))),
+    c(mean(total_avg), median(total_avg), sd(d_avg*i_avg),
+      quantile(d_avg*i_avg, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(d_avg*i_avg<1), mean(d_avg*i_avg>1))),
 
     c(mean(pmed), median(pmed), sd(pmed),
       quantile(pmed, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(pmed<0), mean(pmed>0)))
+      2*min(mean(pmed<1), mean(pmed>1)))
+
   ) # Bayes p-value: tail probability (see JMbayes), 2*min{pr(b<0), pr(b>0))}
   res[,1:5] = round(res[,1:5], digits=3)
   res[,6] = signif(res[,6], digits=2)
   res[9,1] = ifelse(res[9,1] < 0, 0, res[9,1] )
 
   colnames(res) = c("Mean", "Median", "SD", "l-95% CI", "u-95% CI", "Bayes_p")
-  rownames(res) = c("NIE_NZ.c", "NIE_NZ.t", "NIE_Z.c", "NIE_Z.t", "NDE.c", "NDE.t",
-                    "NIE.total", "Avg_NIE_NZ", "Avg_NIE_Z", "Avg_NIE.total", "Avg_NDE", "Total Effect", "Avg_TE", "Prop.Med")
-
-  specified_order <- c("NIE_NZ.t", "NIE_Z.t", "NDE.c", "NIE.total",  "Total Effect", "Prop.Med",
-                       "NIE_NZ.c", "NIE_Z.c", "NDE.t",
-                       "Avg_NIE_NZ", "Avg_NIE_Z", "Avg_NIE.total", "Avg_NDE", "Avg_TE" )
-  res <- res[match(specified_order, rownames(res)), ]
-
+  rownames(res) = c("NDE_NZ.C",	"NDE_NZ.T",	"NDE_Z.C",	"NDE_Z.T", "NIE_NZ.C",	"NIE_NZ.T",	"NIE_Z.C",	"NIE_Z.T",
+                    "NDE.C",	"NDE.T",	"NIE.C",	"NIE.T",
+                    "NDE.AVG",	"NIE_NZ.AVG",	"NIE_Z.AVG", "TOTAL",	"TOTAL_AVG", "PMed")
   res
 }
-cal.rd.effects.y <- function(outcome.pred, outcome.pred.zi = outcome.pred.zi)
+cal.rd.effects.y <- function(outcome.pred = outcome.pred.mu, outcome.pred.zi = outcome.pred.zi)
 {
-  direct_Im_c = (1-outcome.pred.zi[2,1,1,,]) - (1-outcome.pred.zi[1,1,1,,])
-  direct_Im_t = (1-outcome.pred.zi[2,2,1,,]) - (1-outcome.pred.zi[1,2,1,,])
-  direct_control = (outcome.pred[2,1,2,,] - outcome.pred[1,1,2,,])
+  direct_control = (outcome.pred [2,1,2,,] - outcome.pred [1,1,2,,])
   direct_treated = (outcome.pred[2,2,2,,] - outcome.pred[1,2,2,,])
+  direct_Im_c = (1-outcome.pred.zi[2,1,2,,]) - (1-outcome.pred.zi[1,1,2,,])
+  direct_Im_t = (1-outcome.pred.zi[2,2,2,,]) - (1-outcome.pred.zi[1,2,2,,])
 
   indirect_control = outcome.pred[1,2,2,,] - outcome.pred[1,1,2,,]
   indirect_treated = outcome.pred[2,2,2,,] - outcome.pred[2,1,2,,]
+  indirect_Im_t = (1-outcome.pred.zi[2,2,2,,]) / (1-outcome.pred.zi[2,1,2,,])
+  indirect_Im_c = (1-outcome.pred.zi[1,2,2,,]) / (1-outcome.pred.zi[1,1,2,,])
 
-  indirect_Im_t = (1-outcome.pred.zi[2,2,2,,]) - (1-outcome.pred.zi[2,1,2,,])
-  indirect_Im_c = (1-outcome.pred.zi[1,2,2,,]) - (1-outcome.pred.zi[1,1,2,,])
+  direct.c_total = median(direct_control) + median(direct_Im_c)
+  direct.t_total = median(direct_treated) + median(direct_Im_t)
+  indirect.c_total = mean(indirect_control)+ mean(indirect_Im_c)
+  indirect.t_total = mean(indirect_treated)+ mean(indirect_Im_t)
 
-  direct = (direct_control + direct_treated)/2      # avg_NDE
-  indirect = (indirect_control + indirect_treated)/2 # avg_NIE_NZ
-  indirect_Im = (indirect_Im_t + indirect_Im_c)/2    # avg_NIE_Z
-  avg_indirect = indirect + indirect_Im
+  direct_avg = (direct.c_total + direct.t_total)/2
+  indirect_nz_avg = (indirect_control + indirect_treated)/2
+  indirect_z_avg  = (indirect_Im_t + indirect_Im_c)/2
 
-  indirect_t = indirect_treated+indirect_Im_t
-  total = direct_control+indirect_treated+indirect_Im
-  total_avg = direct*indirect+indirect_Im
+  total = direct.c_total+indirect.t_total
+  total_avg = direct_avg+indirect_nz_avg+indirect_z_avg
+
+  d_avg = (direct_control+direct_Im_c + direct_treated+direct_Im_t)/2
+  i_avg = (indirect_control+indirect_Im_c + indirect_treated+indirect_Im_t)/2
 
   # **************************************************
-  pmed = (indirect_treated+indirect_Im)/(direct_control+indirect_treated+indirect_Im)
+  pmed = indirect_treated*indirect_Im_t/(direct.c_total+indirect_treated+indirect_Im_t)
+
 
   res = rbind(
-    c(mean(indirect_control), median(indirect_control), sd(indirect_control),
-      quantile(indirect_control, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(indirect_control<1), mean(indirect_control>1))),
-
-    c(mean(indirect_treated), median(indirect_treated), sd(indirect_treated),
-      quantile(indirect_treated, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(indirect_treated<1), mean(indirect_treated>1))),
-
-    # *******************************************************
-    c(mean(indirect_Im_c), median(indirect_Im_c), sd(indirect_Im_c),
-      quantile(indirect_Im_c, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(indirect_Im<1), mean(indirect_Im>1))),
-
-    c(mean(indirect_Im_t), median(indirect_Im_t), sd(indirect_Im_t),
-      quantile(indirect_Im_t, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(indirect_Im<1), mean(indirect_Im>1))),
-    # *******************************************************
-
     c(mean(direct_control), median(direct_control), sd(direct_control),
       quantile(direct_control, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(direct_control<1), mean(direct_control>1))),
-
     c(mean(direct_treated), median(direct_treated), sd(direct_treated),
       quantile(direct_treated, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(direct_treated<1), mean(direct_treated>1))),
+    c(mean(direct_Im_c), median(direct_Im_c), sd(direct_Im_c),
+      quantile(direct_Im_c, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(direct_Im_c<1), mean(direct_Im_c>1))),
+    c(mean(direct_Im_t), median(direct_Im_t), sd(direct_Im_t),
+      quantile(direct_Im_t, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(direct_Im_t<1), mean(direct_Im_t>1))),
+    # **************************************************
 
-    # *******************************************************
-    c(mean(indirect_t), median(indirect_t), sd(indirect_t),      # NIE.t = NIE_NZ.t * NIE_Z.t
-      quantile(indirect_t, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(indirect_t<1), mean(indirect_t>1))),
+    c(mean(indirect_control), median(indirect_control), sd(indirect_control),
+      quantile(indirect_control, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(indirect_control<1), mean(indirect_control>1))),
+    c(mean(indirect_treated), median(indirect_treated), sd(indirect_treated),
+      quantile(indirect_treated, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(indirect_treated<1), mean(indirect_treated>1))),
+    c(mean(indirect_Im_c), median(indirect_Im_c), sd(indirect_Im_c),
+      quantile(indirect_Im_c, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(indirect_Im_c<1), mean(indirect_Im_c>1))),
+    c(mean(indirect_Im_t), median(indirect_Im_t), sd(indirect_Im_t),
+      quantile(indirect_Im_t, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(indirect_Im_t<1), mean(indirect_Im_t>1))),
+    # **************************************************
 
-    c(mean(indirect), median(indirect), sd(indirect),            # Avg_indirect_NZ
-      quantile(indirect, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(indirect<1), mean(indirect>1))),
+    c(mean(direct.c_total), median(direct.c_total), sd(direct_control*direct_Im_c),
+      quantile(direct_control*direct_Im_c, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(direct_control*direct_Im_c<1), mean(direct_control*direct_Im_c>1))),
+    c(mean(direct.t_total), median(direct.t_total), sd(direct_treated*direct_Im_t),
+      quantile(direct_treated*direct_Im_t, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(direct_treated*direct_Im_t<1), mean(direct_treated*direct_Im_t>1))),
+    c(mean(indirect.c_total), median(indirect.c_total), sd(indirect_control*indirect_Im_c),
+      quantile(indirect_control*indirect_Im_c, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(indirect_control*indirect_Im_c<1), mean(indirect_control*indirect_Im_c>1))),
+    c(mean(indirect.t_total), median(indirect.t_total), sd(indirect_treated*indirect_Im_t),
+      quantile(indirect_treated*indirect_Im_t, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(indirect_treated*indirect_Im_t<1), mean(indirect_treated*indirect_Im_t>1))),
+    # **************************************************
 
-    c(mean(indirect_Im), median(indirect_Im), sd(indirect_Im), # Avg_indirect_Z
-      quantile(indirect_Im, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(indirect_Im<1), mean(indirect_Im>1))),
+    c(mean(direct_avg), median(direct_avg), sd((direct_control*direct_Im_c+  direct_treated*direct_Im_t)/2),
+      quantile((direct_control*direct_Im_c+  direct_treated*direct_Im_t)/2, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean((direct_control*direct_Im_c+  direct_treated*direct_Im_t)/2<1),
+            mean((direct_control*direct_Im_c+  direct_treated*direct_Im_t)/2>1))),
+    c(mean(indirect_nz_avg), median(indirect_nz_avg), sd(indirect_nz_avg),
+      quantile(indirect_nz_avg, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(indirect_nz_avg<1), mean(indirect_nz_avg>1))),
+    c(mean(indirect_z_avg), median(indirect_z_avg), sd(indirect_z_avg),
+      quantile(indirect_z_avg, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(indirect_z_avg<1), mean(indirect_z_avg>1))),
+    # **************************************************
 
-    c(mean(avg_indirect), median(avg_indirect), sd(avg_indirect), # Avg_indirect
-      quantile(avg_indirect, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(avg_indirect<1), mean(avg_indirect>1))),
-
-    c(mean(direct), median(direct), sd(direct),
-      quantile(direct, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(direct<1), mean(direct>1))),
-
-    c(mean(total), median(total), sd(total),
-      quantile(total, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(total<1), mean(total>1))),
-
-    c(mean(total_avg), median(total_avg), sd(total_avg),
-      quantile(total_avg, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(total_avg<1), mean(total_avg>1))),
+    c(mean(total), median(total), sd(direct_control*direct_Im_c*indirect_treated*indirect_Im_t),
+      quantile(direct_control*direct_Im_c*indirect_treated*indirect_Im_t, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(direct_control*direct_Im_c*indirect_treated*indirect_Im_t<1),
+            mean(direct_control*direct_Im_c*indirect_treated*indirect_Im_t>1))),
+    c(mean(total_avg), median(total_avg), sd(d_avg*i_avg),
+      quantile(d_avg*i_avg, probs=c(0.025,0.975), na.rm = T),
+      2*min(mean(d_avg*i_avg<1), mean(d_avg*i_avg>1))),
 
     c(mean(pmed), median(pmed), sd(pmed),
       quantile(pmed, probs=c(0.025,0.975), na.rm = T),
-      2*min(mean(pmed<0), mean(pmed>0)))
+      2*min(mean(pmed<1), mean(pmed>1)))
+
   ) # Bayes p-value: tail probability (see JMbayes), 2*min{pr(b<0), pr(b>0))}
   res[,1:5] = round(res[,1:5], digits=3)
   res[,6] = signif(res[,6], digits=2)
   res[9,1] = ifelse(res[9,1] < 0, 0, res[9,1] )
 
   colnames(res) = c("Mean", "Median", "SD", "l-95% CI", "u-95% CI", "Bayes_p")
-  rownames(res) = c("NIE_NZ.c", "NIE_NZ.t", "NIE_Z.c", "NIE_Z.t", "NDE.c", "NDE.t",
-                    "NIE.total", "Avg_NIE_NZ", "Avg_NIE_Z", "Avg_NIE.total", "Avg_NDE", "Total Effect", "Avg_TE", "Prop.Med")
-
-  specified_order <- c("NIE_NZ.t", "NIE_Z.t", "NDE.c", "NIE.total",  "Total Effect", "Prop.Med",
-                       "NIE_NZ.c", "NIE_Z.c", "NDE.t",
-                       "Avg_NIE_NZ", "Avg_NIE_Z", "Avg_NIE.total", "Avg_NDE", "Avg_TE" )
-  res <- res[match(specified_order, rownames(res)), ]
-
+  rownames(res) = c("NDE_NZ.C",	"NDE_NZ.T",	"NDE_Z.C",	"NDE_Z.T", "NIE_NZ.C",	"NIE_NZ.T",	"NIE_Z.C",	"NIE_Z.T",
+                    "NDE.C",	"NDE.T",	"NIE.C",	"NIE.T",
+                    "NDE.AVG",	"NIE_NZ.AVG",	"NIE_Z.AVG", "TOTAL",	"TOTAL_AVG", "PMed")
   res
 }
 
