@@ -75,7 +75,7 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
     dat.y.temp[, treat] <- value[i]
     dat.y.temp[, mediator] = 0
 
-    if( zi.outcome  ){
+    if(zi.outcome  ){
       predict.y.cov.mu[i,,] = posterior_linpred(model.y, newdata = dat.y.temp, dpar = depar.outcome[1])
       predict.y.cov.zi[i,,] = posterior_linpred(model.y, newdata = dat.y.temp, dpar = depar.outcome[2])
     }else{
@@ -327,7 +327,7 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
       # res.mu.zi = cal.rr.effects.y(outcome.pred.mu, outcome.pred.zi, outcome.pred.overall)
       # res.rr <- list(effects.mu.rr = res.mu.zi)
 
-      # res.mu.zi = cal.rd.effects.y(outcome.pred.mu, outcome.pred.zi)
+      res.mu.zi = cal.rd.effects.y(outcome.pred.mu, outcome.pred.zi)
       res.rd <- list(effects.mu.rd = res.mu.zi)
       rst <- list(effects.rd = res.rd, effects.rr = res.rr, outcome.linpred.mu=outcome.linpred.mu,
                   outcome.linpred.zi=outcome.linpred.zi,
