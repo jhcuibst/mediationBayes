@@ -21,14 +21,46 @@ ir.func <- function(data, var1, post_cancer, cancer){
   return( df)
 }
 ```
-
-### Using the predefined function to get result
+Use the predefined function to get result
 ```r
 ir.func(data = anal.all, var1 ="race", post_cancer =  "post_anal", cancer = "anal")
 ```
 
+### An example using my R package to conduct mediaiton analysis
+Load data: 
+data(example_data)
+
+|Name | Meanings of variables in the dataset|
+|-----|----------------------------|
+|x    |Exposure variable.|
+|mnb  |Mediator with zero-infalted negative bionomial (ZINB) distribution.|
+|xm   |The interaction between exposure and mediator. User can defined it directly in the model fitting using the same way as thos in R package _glm_.|
+|im   |The indicator of zero-inflated mediator, which is used for estimating decomposed Narutal Indirect Effect (NIE).|
+|y   |The outcome variable.|
+
+Set up priors
+```r
+prior.m = c(
+          set_prior("student_t(3, 0, 2.5)", class = "b"),  
+          set_prior("student_t(3, 0, 2.5)", class = "b", dpar = "hu") )
+prior.y = set_prior("student_t(3, 0, 2.5)", class="b")
+```
+Fit Bayesian models
+```r
+hnb.m <- brm(bf(mnb~ x + age, hu ~ x + age), data = example_data, prior = prior.m,  
+             family = hurdle_negbinomial(), chains = 4, iter = 2000)
+hnb.y <- brm(y ~  x + mnb + age + im, data = example_data, prior = prior.y,  
+            family = bernoulli(), chains = 4, iter = 2000)
+```
+Get outputs of mediation analysis
+```r
+outmed <- medbayes(hnb.m, hnb.y, mediator="mnb", treat="x", outcome = "y", ind_mediator = "im",  
+                   control.value = 0, treat.value = 1)
+```
+
 ## Below is an example of SAS code
-### Used for C=cleaning data: convert all NA to missing
+
+Used for cleaning data: convert all NA to missing
 ```r
 data stroke_free_long3; 
 	set stroke_free_long2; 
@@ -46,8 +78,7 @@ data stroke_free_long3;
 run;
 ```
 
-### Given cleaned data, fit a mixed effect model and output results
-
+Given cleaned data, fit a mixed effect model and output results
 ```r
 ods select ModelInfo Estimates Covtests;
 
@@ -69,37 +100,4 @@ ods select ModelInfo Estimates Covtests;
 
 Author: Cui,Jinhong; jhcui@uab.edu
 
-## An example using my R package to conduct mediaiton analysis
 
-### Load data: 
-data(example_data)
-
-|Name | Meanings of variables in the dataset|
-|-----|----------------------------|
-|x    |Exposure variable.|
-|mnb  |Mediator with zero-infalted negative bionomial (ZINB) distribution.|
-|xm   |The interaction between exposure and mediator. User can defined it directly in the model fitting using the same way as thos in R package _glm_.|
-|im   |The indicator of zero-inflated mediator, which is used for estimating decomposed Narutal Indirect Effect (NIE).|
-|y   |The outcome variable.|
-
-#### Set up priors
-```r
-prior.m = c(
-          set_prior("student_t(3, 0, 2.5)", class = "b"),  
-          set_prior("student_t(3, 0, 2.5)", class = "b", dpar = "hu") )
-prior.y = set_prior("student_t(3, 0, 2.5)", class="b")
-```
-
-#### Fit Bayesian models
-```r
-hnb.m <- brm(bf(mnb~ x + age, hu ~ x + age), data = example_data, prior = prior.m,  
-             family = hurdle_negbinomial(), chains = 4, iter = 2000)
-hnb.y <- brm(y ~  x + mnb + age + im, data = example_data, prior = prior.y,  
-            family = bernoulli(), chains = 4, iter = 2000)
-```
-
-#### Get outputs of mediation analysis
-```r
-outmed <- medbayes(hnb.m, hnb.y, mediator="mnb", treat="x", outcome = "y", ind_mediator = "im",  
-                   control.value = 0, treat.value = 1)
-```
