@@ -1,7 +1,7 @@
 # Cui, Jinhong_Work sample_2025 
 
 ## An example of R code
-### This is for creating an IR function with 95% CI
+Creating an IR function with 95% CI
 
 ```r
 z = qnorm(0.975, 0, 1)
