@@ -390,7 +390,7 @@ cal.rd.effects <- function(outcome.pred)
       2*min(mean(pmed<0), mean(pmed>0)))
   ) # Bayes p-value: tail probability (see JMbayes), 2*min{pr(b<0), pr(b>0))}
   res[,1:5] = round(res[,1:5], digits=3)
-  res[,6] = signif(res[,6], digits=2)
+  res[,6] = signif(res[,6], digits=4)
   res[8,1] = ifelse(res[8,1] < 0, 0, res[8,1] )
   rownames(res) = c("Indirect_control", "Indirect_treated", "Direct_control", "Direct_treated",
                     "Total Effect", "Indirect", "Direct", "Prop.Med")
@@ -450,7 +450,7 @@ cal.rr.effects <- function(outcome.pred)
       2*min(mean(pmed<0), mean(pmed>0)))
   ) # Bayes p-value: tail probability (see JMbayes), 2*min{pr(b<0), pr(b>0))}
   res[,1:5] = round(res[,1:5], digits=3)
-  res[,6] = signif(res[,6], digits=2)
+  res[,6] = signif(res[,6], digits=4)
   res[8,1] = ifelse(res[8,1] < 0, 0, res[8,1] )
   rownames(res) = c("Indirect_control", "Indirect_treated", "Direct_control", "Direct_treated",
                     "Total Effect", "Indirect", "Direct", "Prop.Med")
@@ -520,7 +520,7 @@ cal.rd.effects.ind  <- function(outcome.pred)
       2*min(mean(pmed<0), mean(pmed>0)))
   ) # Bayes p-value: tail probability (see JMbayes), 2*min{pr(b<0), pr(b>0))}
   res[,1:5] = round(res[,1:5], digits=3)
-  res[,6] = signif(res[,6], digits=2)
+  res[,6] = signif(res[,6], digits=4)
   res[9,1] = ifelse(res[9,1] < 0, 0, res[9,1] )
   rownames(res) = c("Indirect_control", "Indirect_treated", "Indirect_Indicator",
                     "Direct_control", "Direct_treated",
@@ -593,7 +593,7 @@ cal.rr.effects.ind <- function(outcome.pred)
       2*min(mean(pmed<0), mean(pmed>0)))
   ) # Bayes p-value: tail probability (see JMbayes), 2*min{pr(b<0), pr(b>0))}
   res[,1:5] = round(res[,1:5], digits=3)
-  res[,6] = signif(res[,6], digits=2)
+  res[,6] = signif(res[,6], digits=4)
   res[9,1] = ifelse(res[9,1] < 0, 0, res[9,1] )
   rownames(res) = c("Indirect_control", "Indirect_treated", "Indirect_Indicator",
                     "Direct_control", "Direct_treated",
@@ -702,7 +702,7 @@ cal.rr.effects.y <- function(outcome.pred = outcome.pred.mu, outcome.pred.zi = o
 
   ) # Bayes p-value: tail probability (see JMbayes), 2*min{pr(b<0), pr(b>0))}
   res[,1:5] = round(res[,1:5], digits=3)
-  res[,6] = signif(res[,6], digits=2)
+  res[,6] = signif(res[,6], digits=4)
   res[9,1] = ifelse(res[9,1] < 0, 0, res[9,1] )
 
   colnames(res) = c("Mean", "Median", "SD", "l-95% CI", "u-95% CI", "Bayes_p")
@@ -811,7 +811,7 @@ cal.rd.effects.y <- function(outcome.pred = outcome.pred.mu, outcome.pred.zi = o
 
   ) # Bayes p-value: tail probability (see JMbayes), 2*min{pr(b<0), pr(b>0))}
   res[,1:5] = round(res[,1:5], digits=3)
-  res[,6] = signif(res[,6], digits=2)
+  res[,6] = signif(res[,6], digits=4)
   res[9,1] = ifelse(res[9,1] < 0, 0, res[9,1] )
 
   colnames(res) = c("Mean", "Median", "SD", "l-95% CI", "u-95% CI", "Bayes_p")
