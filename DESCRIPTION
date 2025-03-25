@@ -1,7 +1,7 @@
 Package: mediationBayes
 Type: Package
 Title: Bayesian Mediation analysis approach
-Version: 0.1.0
+Version: 0.1.1
 Author: Jinhong Cui
 Maintainer: The package maintainer <jhcui@uab.edu>; <cuijinhongqk@gmail.com>
 Description: This R package provides a flexible Bayesian mediation analysis framework particularly suitable for zero-inflated data. 
