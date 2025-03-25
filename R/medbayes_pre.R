@@ -35,25 +35,25 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
   dat.new = model.m$data
 
   # if (family(model.m)$family %in% c("hurdle_negbinomial", "hurdle_poisson")){
-  dpar.m = c("mu", "hu")
-  predict.ms <- array(NA, dim = c(2, ndraws(model.m), 1))
-  for(i in 1:length(value)){
-    dat.new[, treat] = value[i]
-    predict.ms[i,,] = 0
-    # predict.ms[i,,] = posterior_epred(model.m, newdata = dat.new, dpar = dpar.m[1])
-    predict.ms[i,,] = posterior_epred(model.m, newdata = dat.new, dpar = NULL)[,1]
-  }
-
-  if(!is.null(ind_mediator)){
-    predict.ind_ms <- array(NA, dim = c(2, ndraws(model.m), 1))
+    dpar.m = c("mu", "hu")
+    predict.ms <- array(NA, dim = c(2, ndraws(model.m), nrow(dat.new)))
     for(i in 1:length(value)){
       dat.new[, treat] = value[i]
-      predict.ind_ms[i,,] = 0
-      predict.ind_ms[i,,] = 1- posterior_epred(model.m, newdata = dat.new, dpar = dpar.m[2])[,1]
+      predict.ms[i,,] = 0
+      # predict.ms[i,,] = posterior_epred(model.m, newdata = dat.new, dpar = dpar.m[1])
+      predict.ms[i,,] = posterior_epred(model.m, newdata = dat.new, dpar = NULL)
     }
-  }else{
-    predict.ind_ms <- array(0, dim = c(2, ndraws(model.m), 1))
-  }
+
+    if(!is.null(ind_mediator)){
+      predict.ind_ms <- array(NA, dim = c(2, ndraws(model.m), nrow(dat.new)))
+      for(i in 1:length(value)){
+        dat.new[, treat] = value[i]
+        predict.ind_ms[i,,] = 0
+        predict.ind_ms[i,,] = 1- posterior_epred(model.m, newdata = dat.new, dpar = dpar.m[2])
+      }
+    }else{
+      predict.ind_ms <- array(0, dim = c(2, ndraws(model.m), nrow(dat.new)))
+    }
 
   dat.y = model.y$data
   ef_y = as_draws_df(model.y)
@@ -64,9 +64,9 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
 
   zi.outcome = grepl("zero", family(model.y)$family) | grepl("hurdle", family(model.y)$family)
   # pred_y without mediator(s) effect ----
-  predict.y.cov <- array(NA, dim = c(2, ndraws(model.y), 1) )
-  predict.y.cov.mu <- array(NA, dim = c(2, ndraws(model.y), 1) )
-  predict.y.cov.zi <- array(NA, dim = c(2, ndraws(model.y), 1) )
+  predict.y.cov <- array(NA, dim = c(2, ndraws(model.y), nrow(dat.y)) )
+  predict.y.cov.mu <- array(NA, dim = c(2, ndraws(model.y), nrow(dat.y)) )
+  predict.y.cov.zi <- array(NA, dim = c(2, ndraws(model.y), nrow(dat.y)) )
 
   for(i in 1:length(value)){
     dat.y.temp <- dat.y
@@ -74,10 +74,10 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
     dat.y.temp[, mediator] = 0
 
     if(zi.outcome){
-      predict.y.cov.mu[i,,] = posterior_linpred(model.y, newdata = dat.y.temp, dpar = depar.outcome[1])[,1]
-      predict.y.cov.zi[i,,] = posterior_linpred(model.y, newdata = dat.y.temp, dpar = depar.outcome[2])[,1]
+      predict.y.cov.mu[i,,] = posterior_linpred(model.y, newdata = dat.y.temp, dpar = depar.outcome[1])
+      predict.y.cov.zi[i,,] = posterior_linpred(model.y, newdata = dat.y.temp, dpar = depar.outcome[2])
     }else{
-      predict.y.cov[i,,] = posterior_linpred(model.y, newdata = dat.y.temp)[,1]
+      predict.y.cov[i,,] = posterior_linpred(model.y, newdata = dat.y.temp)
     }
   }
 
@@ -166,9 +166,9 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
     bxIm = 0
   }
 
-  outcome.linpred    = array(NA, dim = c(2, 2, 2, ndraws(model.y), 1))
-  outcome.linpred.mu = array(NA, dim = c(2, 2, 2, ndraws(model.y), 1))
-  outcome.linpred.zi = array(NA, dim = c(2, 2, 2, ndraws(model.y), 1))
+  outcome.linpred    = array(NA, dim = c(2, 2, 2, ndraws(model.y), nrow(dat.y)))
+  outcome.linpred.mu = array(NA, dim = c(2, 2, 2, ndraws(model.y), nrow(dat.y)))
+  outcome.linpred.zi = array(NA, dim = c(2, 2, 2, ndraws(model.y), nrow(dat.y)))
 
   if( int_of_xIm & int_of_xm ) {
 
@@ -233,7 +233,7 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
                   predict.y.cov.mu[i,,] )
             outcome.linpred.zi[i,j,r,,] =
               suppressWarnings(as.numeric(as.matrix(predict.ms[j,,]*b_zi_m) + as.matrix(b_zi_indm *predict.ind_ms[r,,]
-                                                                                        + bxIm*value[i]*predict.ind_ms[r,,]) ) + predict.y.cov.zi[i,,])
+                                          + bxIm*value[i]*predict.ind_ms[r,,]) ) + predict.y.cov.zi[i,,])
           }else{
             outcome.linpred[i,j,r,,] =
               suppressWarnings(as.numeric(as.matrix(predict.ms[j,,]*bm) + as.matrix(bxm*value[i]*predict.ms[j,,]) +
