@@ -40,7 +40,6 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
   for(i in 1:length(value)){
     dat.new[, treat] = value[i]
     predict.ms[i,,] = 0
-    # predict.ms[i,,] = posterior_epred(model.m, newdata = dat.new, dpar = dpar.m[1])
     predict.ms[i,,] = posterior_epred(model.m, newdata = dat.new, dpar = NULL)[,1]
   }
 
