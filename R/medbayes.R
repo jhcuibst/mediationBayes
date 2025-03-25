@@ -55,8 +55,6 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
       predict.ind_ms <- array(0, dim = c(2, ndraws(model.m), nrow(dat.new)))
     }
 
-
-
   dat.y = model.y$data
   ef_y = as_draws_df(model.y)
 
@@ -75,11 +73,11 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
     dat.y.temp[, treat] <- value[i]
     dat.y.temp[, mediator] = 0
 
-    if(zi.outcome  ){
+    if(zi.outcome){
       predict.y.cov.mu[i,,] = posterior_linpred(model.y, newdata = dat.y.temp, dpar = depar.outcome[1])
       predict.y.cov.zi[i,,] = posterior_linpred(model.y, newdata = dat.y.temp, dpar = depar.outcome[2])
     }else{
-      predict.y.cov[i,,] = posterior_linpred(model.y, newdata = dat.y)
+      predict.y.cov[i,,] = posterior_linpred(model.y, newdata = dat.y.temp)
     }
   }
 
@@ -95,7 +93,6 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
     coef.mediator.zi = paste("b_hu_", mediator, sep = "")
     b_zi_m = as.matrix(ef_y)[,coef.mediator.zi]
   }
-
 
   if(!is.null(ind_mediator)){
     coef.ind_mediator = paste("b_", ind_mediator, sep = "")
@@ -286,7 +283,7 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
   if(y_link == "identity" & !(zi.outcome))  outcome.pred = outcome.linpred
   if(y_link == "logit"& !(zi.outcome))     outcome.pred  = exp(outcome.linpred)/(1+exp(outcome.linpred))
 
-  if(zi.outcome ){
+  if(zi.outcome){
     outcome.pred.mu  = exp(outcome.linpred.mu)
     outcome.pred.zi  = exp(outcome.linpred.zi)/(1+exp(outcome.linpred.zi))
     outcome.pred.overall  = outcome.pred.mu*(1-outcome.pred.zi)
