@@ -18,3 +18,11 @@ medbayes(
   logM = FALSE
 )
 }
+\arguments{
+\item{model.m}{A brms model for the mediator}
+
+\item{dat.new}{New data for prediction}
+}
+\value{
+Posterior predictions (first column)
+}

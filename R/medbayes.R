@@ -1,7 +1,4 @@
 #'
-#' @name mediationBayes
-#' @title mediationBayes Package Main Function
-#' @docType package
 #' @param model.m A brms model for the mediator
 #' @param dat.new New data for prediction
 #' @return Posterior predictions (first column)
