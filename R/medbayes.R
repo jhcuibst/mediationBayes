@@ -30,6 +30,7 @@ medbayes <- function(model.m = model.m, model.y = model.y,
     message("Package 'brms' is already installed and loaded.")
   }
 
+  print("New version of medbayes is running!")
   message("Mediation analysis function is running...")
 
 
