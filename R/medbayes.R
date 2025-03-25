@@ -35,24 +35,24 @@ medbayes <- function(model.m = hnb.m, model.y = hnb.y,
   dat.new = model.m$data
 
   # if (family(model.m)$family %in% c("hurdle_negbinomial", "hurdle_poisson")){
-  dpar.m = c("mu", "hu")
-  predict.ms <- array(NA, dim = c(2, ndraws(model.m), 1))
-  for(i in 1:length(value)){
-    dat.new[, treat] = value[i]
-    predict.ms[i,,] = 0
-    predict.ms[i,,] = posterior_epred(model.m, newdata = dat.new, dpar = NULL)[,1]
-  }
-
-  if(!is.null(ind_mediator)){
-    predict.ind_ms <- array(NA, dim = c(2, ndraws(model.m), 1))
+    dpar.m = c("mu", "hu")
+    predict.ms <- array(NA, dim = c(2, ndraws(model.m), 1))
     for(i in 1:length(value)){
       dat.new[, treat] = value[i]
-      predict.ind_ms[i,,] = 0
-      predict.ind_ms[i,,] = 1- posterior_epred(model.m, newdata = dat.new, dpar = dpar.m[2])[,1]
+      predict.ms[i,,] = 0
+      predict.ms[i,,] = posterior_epred(model.m, newdata = dat.new, dpar = NULL)[,1]
     }
-  }else{
-    predict.ind_ms <- array(0, dim = c(2, ndraws(model.m), 1))
-  }
+
+    if(!is.null(ind_mediator)){
+      predict.ind_ms <- array(NA, dim = c(2, ndraws(model.m), 1))
+      for(i in 1:length(value)){
+        dat.new[, treat] = value[i]
+        predict.ind_ms[i,,] = 0
+        predict.ind_ms[i,,] = 1- posterior_epred(model.m, newdata = dat.new, dpar = dpar.m[2])[,1]
+      }
+    }else{
+      predict.ind_ms <- array(0, dim = c(2, ndraws(model.m), 1))
+    }
 
   dat.y = model.y$data
   ef_y = as_draws_df(model.y)
