@@ -5,7 +5,7 @@
 #' @export
 #'
 
-medbayes <- function(model.m = hnb.m, model.y = hnb.y,
+medbayes <- function(model.m = model.m, model.y = model.y,
                      treat = "treatment", mediator = "mediator", ind_mediator = NULL, outcome = "outcome",
                      control.value = 0, treat.value = 1,
                      logM = FALSE )
