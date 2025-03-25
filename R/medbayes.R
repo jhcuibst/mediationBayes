@@ -1,11 +1,16 @@
+#'
+#' @name mediationBayes
+#' @title mediationBayes Package Main Function
+#' @docType package
+#' @export
+#'
 
-library(brms)
-# **************************************************
 medbayes <- function(model.m = hnb.m, model.y = hnb.y,
                      treat = "treatment", mediator = "mediator", ind_mediator = NULL, outcome = "outcome",
                      control.value = 0, treat.value = 1,
                      logM = FALSE )
 {
+  library(brms)
   # Check whether package 'brms' is installed
 
   if (!require("brms", character.only = TRUE)) {
