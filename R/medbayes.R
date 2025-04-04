@@ -362,6 +362,8 @@ cal.rd.effects <- function(outcome.pred)
   total = direct + indirect
   # **************************************************
   pmed = indirect/total
+  pmed.mean = mean(indirect)/mean(total)
+  pmed.med = median(indirect)/median(total)
 
   res = rbind(
     c(mean(indirect_control), median(indirect_control), sd(indirect_control),
@@ -392,7 +394,7 @@ cal.rd.effects <- function(outcome.pred)
       quantile(direct, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(direct<0), mean(direct>0))),
 
-    c(mean(pmed), median(pmed), sd(pmed),
+    c(mean(pmed.mean), median(pmed.med), sd(pmed),
       quantile(pmed, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(pmed<0), mean(pmed>0)))
   ) # Bayes p-value: tail probability (see JMbayes), 2*min{pr(b<0), pr(b>0))}
@@ -477,6 +479,8 @@ cal.rd.effects.ind  <- function(outcome.pred)
 
   total = direct + indirect
   pmed = indirect/total
+  pmed.mean = mean(indirect)/mean(total)
+  pmed.med = median(indirect)/median(total)
 
   res = rbind(
     c(mean(indirect_control), median(indirect_control), sd(indirect_control),
@@ -513,7 +517,7 @@ cal.rd.effects.ind  <- function(outcome.pred)
       quantile(direct, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(direct<0), mean(direct>0))),
 
-    c(mean(pmed), median(pmed), sd(pmed),
+    c(mean(pmed.mean), median(pmed.med), sd(pmed),
       quantile(pmed, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(pmed<0), mean(pmed>0)))
   ) # Bayes p-value: tail probability (see JMbayes), 2*min{pr(b<0), pr(b>0))}
@@ -735,7 +739,8 @@ cal.rd.effects.y <- function(outcome.pred = outcome.pred.mu, outcome.pred.zi = o
 
   # **************************************************
   pmed = indirect_treated*indirect_Im_t/(direct.c_total+indirect_treated+indirect_Im_t)
-
+  pmed.mean = mean(indirect_treated)*mean(indirect_Im_t)/mean(direct.c_total+indirect_treated+indirect_Im_t)
+  pmed.med = median(indirect_treated)*median(indirect_Im_t)/median(direct.c_total+indirect_treated+indirect_Im_t)
 
   res = rbind(
     c(mean(direct_control), median(direct_control), sd(direct_control),
