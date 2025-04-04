@@ -348,12 +348,9 @@ medbayes <- function(model.m = model.m, model.y = model.y,
 cal.rd.effects <- function(outcome.pred)
 {
   direct_control = outcome.pred[2,1,1,,] - outcome.pred[1,1,1,,]
-  # treated: Y(1,M(1)) - Y(0,M(1))
   direct_treated = outcome.pred[2,2,1,,] - outcome.pred[1,2,1,,]
-  # mediation effect: Y(t,M(1)) - Y(t,M(0))
-  # control: Y(0,M(1)) - Y(0,M(0))
+
   indirect_control = outcome.pred[1,2,2,,] - outcome.pred[1,1,2,,]
-  # treated: Y(1,M(1)) - Y(1,M(0))
   indirect_treated = outcome.pred[2,2,2,,] - outcome.pred[2,1,2,,]
 
   direct = (direct_control + direct_treated)/2
