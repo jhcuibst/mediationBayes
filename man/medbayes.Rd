@@ -5,8 +5,8 @@
 \title{Run Bayesian mediation model}
 \usage{
 medbayes(
-  model.m = hnb.m,
-  model.y = hnb.y,
+  model.m = model.m,
+  model.y = model.y,
   treat = "treatment",
   mediator = "mediator",
   ind_mediator = NULL,
