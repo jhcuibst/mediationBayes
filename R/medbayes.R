@@ -47,7 +47,7 @@ medbayes <- function(model.m = model.m, model.y = model.y,
     for(i in 1:length(value)){
       dat.new[, treat] = value[i]
       predict.ms[i,,] = 0
-      predict.ms[i,,] = posterior_epred(model.m, newdata = dat.new, dpar = NULL)[,1]
+      predict.ms[i,,] = posterior_epred(model.m, newdata = dat.new, dpar = NULL)
     }
 
     if(!is.null(ind_mediator)){
@@ -55,7 +55,7 @@ medbayes <- function(model.m = model.m, model.y = model.y,
       for(i in 1:length(value)){
         dat.new[, treat] = value[i]
         predict.ind_ms[i,,] = 0
-        predict.ind_ms[i,,] = 1- posterior_epred(model.m, newdata = dat.new, dpar = dpar.m[2])[,1]
+        predict.ind_ms[i,,] = 1- posterior_epred(model.m, newdata = dat.new, dpar = dpar.m[2])
       }
     }else{
       predict.ind_ms <- array(0, dim = c(2, ndraws(model.m), 1))
@@ -80,10 +80,10 @@ medbayes <- function(model.m = model.m, model.y = model.y,
     dat.y.temp[, mediator] = 0
 
     if(zi.outcome){
-      predict.y.cov.mu[i,,] = posterior_linpred(model.y, newdata = dat.y.temp, dpar = depar.outcome[1])[,1]
-      predict.y.cov.zi[i,,] = posterior_linpred(model.y, newdata = dat.y.temp, dpar = depar.outcome[2])[,1]
+      predict.y.cov.mu[i,,] = posterior_linpred(model.y, newdata = dat.y.temp, dpar = depar.outcome[1])
+      predict.y.cov.zi[i,,] = posterior_linpred(model.y, newdata = dat.y.temp, dpar = depar.outcome[2])
     }else{
-      predict.y.cov[i,,] = posterior_linpred(model.y, newdata = dat.y.temp)[,1]
+      predict.y.cov[i,,] = posterior_linpred(model.y, newdata = dat.y.temp)
     }
   }
 
@@ -455,7 +455,7 @@ cal.rr.effects <- function(outcome.pred)
       quantile(pmed, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(pmed<0), mean(pmed>0)))
   ) # Bayes p-value: tail probability (see JMbayes), 2*min{pr(b<0), pr(b>0))}
-  res[,1:5] = round(res[,1:5], digits=3)
+  res[,1:5] = round(res[,1:5], digits=5)
   res[,6] = signif(res[,6], digits=4)
   res[8,1] = ifelse(res[8,1] < 0, 0, res[8,1] )
   rownames(res) = c("Indirect_control", "Indirect_treated", "Direct_control", "Direct_treated",
