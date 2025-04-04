@@ -43,7 +43,7 @@ medbayes <- function(model.m = model.m, model.y = model.y,
 
   # if (family(model.m)$family %in% c("hurdle_negbinomial", "hurdle_poisson")){
     dpar.m = c("mu", "hu")
-    predict.ms <- array(NA, dim = c(2, ndraws(model.m), 1))
+    predict.ms <- array(NA, dim = c(2, ndraws(model.m), nrow(dat.new)))
     for(i in 1:length(value)){
       dat.new[, treat] = value[i]
       predict.ms[i,,] = 0
@@ -51,7 +51,7 @@ medbayes <- function(model.m = model.m, model.y = model.y,
     }
 
     if(!is.null(ind_mediator)){
-      predict.ind_ms <- array(NA, dim = c(2, ndraws(model.m), 1))
+      predict.ind_ms <- array(NA, dim = c(2, ndraws(model.m), nrow(dat.new)))
       for(i in 1:length(value)){
         dat.new[, treat] = value[i]
         predict.ind_ms[i,,] = 0
@@ -70,9 +70,9 @@ medbayes <- function(model.m = model.m, model.y = model.y,
 
   zi.outcome = grepl("zero", family(model.y)$family) | grepl("hurdle", family(model.y)$family)
   # pred_y without mediator(s) effect ----
-  predict.y.cov <- array(NA, dim = c(2, ndraws(model.y), 1) )
-  predict.y.cov.mu <- array(NA, dim = c(2, ndraws(model.y), 1) )
-  predict.y.cov.zi <- array(NA, dim = c(2, ndraws(model.y), 1) )
+  predict.y.cov <- array(NA, dim = c(2, ndraws(model.y), nrow(dat.y)) )
+  predict.y.cov.mu <- array(NA, dim = c(2, ndraws(model.y), nrow(dat.y)) )
+  predict.y.cov.zi <- array(NA, dim = c(2, ndraws(model.y), nrow(dat.y)) )
 
   for(i in 1:length(value)){
     dat.y.temp <- dat.y
@@ -172,9 +172,9 @@ medbayes <- function(model.m = model.m, model.y = model.y,
     bxIm = 0
   }
 
-  outcome.linpred    = array(NA, dim = c(2, 2, 2, ndraws(model.y), 1))
-  outcome.linpred.mu = array(NA, dim = c(2, 2, 2, ndraws(model.y), 1))
-  outcome.linpred.zi = array(NA, dim = c(2, 2, 2, ndraws(model.y), 1))
+  outcome.linpred    = array(NA, dim = c(2, 2, 2, ndraws(model.y), nrow(dat.y)))
+  outcome.linpred.mu = array(NA, dim = c(2, 2, 2, ndraws(model.y), nrow(dat.y)))
+  outcome.linpred.zi = array(NA, dim = c(2, 2, 2, ndraws(model.y), nrow(dat.y)))
 
   if( int_of_xIm & int_of_xm ) {
 
@@ -274,6 +274,7 @@ medbayes <- function(model.m = model.m, model.y = model.y,
       }
     }
   }
+
 
   # ----
   ### for i, j, m:
@@ -407,20 +408,17 @@ cal.rd.effects <- function(outcome.pred)
 cal.rr.effects <- function(outcome.pred)
 {
   direct_control = outcome.pred[2,1,1,,] / outcome.pred[1,1,1,,]
-  # treated: Y(1,M(1)) - Y(0,M(1))
   direct_treated = outcome.pred[2,2,1,,] / outcome.pred[1,2,1,,]
-  # mediation effect: Y(t,M(1)) - Y(t,M(0))
-  # control: Y(0,M(1)) - Y(0,M(0))
   indirect_control = outcome.pred[1,2,2,,] / outcome.pred[1,1,2,,]
-  # treated: Y(1,M(1)) - Y(1,M(0))
   indirect_treated = outcome.pred[2,2,2,,] / outcome.pred[2,1,2,,]
-
   direct = (direct_control + direct_treated)/2
   indirect = (indirect_control + indirect_treated)/2
 
   total = direct * indirect
   # **************************************************
-  pmed = direct*(indirect-1)/(total-1)
+  pmed = (direct)*(indirect-1)/(total-1)
+  pmed.mean = mean(direct)*(mean(indirect)-1)/(mean(direct)*mean(indirect)-1)
+  pmed.med = median(direct)*(median(indirect)-1)/(median(direct)*median(indirect)-1)
 
   res = rbind(
     c(mean(indirect_control), median(indirect_control), sd(indirect_control),
@@ -451,7 +449,7 @@ cal.rr.effects <- function(outcome.pred)
       quantile(direct, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(direct<1), mean(direct>1))),
 
-    c(mean(pmed), median(pmed), sd(pmed),
+    c(mean(pmed.mean), median(pmed.med), sd(pmed),
       quantile(pmed, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(pmed<0), mean(pmed>0)))
   ) # Bayes p-value: tail probability (see JMbayes), 2*min{pr(b<0), pr(b>0))}
@@ -467,19 +465,13 @@ cal.rr.effects <- function(outcome.pred)
 cal.rd.effects.ind  <- function(outcome.pred)
 {
   direct_control = outcome.pred[2,1,1,,] - outcome.pred[1,1,1,,]
-  # treated: Y(1,M(1)) - Y(0,M(1))
   direct_treated = outcome.pred[2,2,1,,] - outcome.pred[1,2,1,,]
-  # mediation effect: Y(t,M(1)) - Y(t,M(0))
-  # control: Y(0,M(1)) - Y(0,M(0))
   indirect_control = outcome.pred[1,2,2,,] - outcome.pred[1,1,2,,]
-  # treated: Y(1,M(1)) - Y(1,M(0))
   indirect_treated = outcome.pred[2,2,2,,] - outcome.pred[2,1,2,,]
 
   direct = (direct_control + direct_treated)/2
   indirect = (indirect_control + indirect_treated)/2
 
-  # **************************************************
-  # treated: Y(1,M(0), I(m1)) - Y(1,M(0), I(m0))
   indirect_Im = outcome.pred[2,1,2,,] - outcome.pred[2,1,1,,]
   indirect = indirect + indirect_Im
 
@@ -538,26 +530,22 @@ cal.rd.effects.ind  <- function(outcome.pred)
 cal.rr.effects.ind <- function(outcome.pred)
 {
   direct_control = outcome.pred[2,1,1,,] / outcome.pred[1,1,1,,]
-  # treated: Y(1,M(1)) - Y(0,M(1))
   direct_treated = outcome.pred[2,2,1,,] / outcome.pred[1,2,1,,]
-  # mediation effect: Y(t,M(1)) - Y(t,M(0))
-  # control: Y(0,M(1)) - Y(0,M(0))
   indirect_control = outcome.pred[1,2,2,,] / outcome.pred[1,1,2,,]
-  # treated: Y(1,M(1)) - Y(1,M(0))
   indirect_treated = outcome.pred[2,2,2,,] / outcome.pred[2,1,2,,]
 
   direct = (direct_control + direct_treated)/2
   indirect = (indirect_control + indirect_treated)/2
 
   # **************************************************
-  # treated: Y(1,M(0), I(m1)) - Y(1,M(0), I(m0))
   indirect_Im = outcome.pred[2,1,2,,] / outcome.pred[2,1,1,,]
   indirect = indirect * indirect_Im
-
   total = direct*indirect
 
   # **************************************************
   pmed = direct*(indirect-1)/(total-1)
+  pmed.mean = mean(direct)*(mean(indirect)-1)/(mean(direct)*mean(indirect)-1)
+  pmed.med = median(direct)*(median(indirect)-1)/(median(direct)*median(indirect)-1)
 
   res = rbind(
     c(mean(indirect_control), median(indirect_control), sd(indirect_control),
@@ -594,7 +582,7 @@ cal.rr.effects.ind <- function(outcome.pred)
       quantile(direct, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(direct<1), mean(direct>1))),
 
-    c(mean(pmed), median(pmed), sd(pmed),
+    c(mean(pmed.mean), median(pmed.med), sd(pmed),
       quantile(pmed, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(pmed<0), mean(pmed>0)))
   ) # Bayes p-value: tail probability (see JMbayes), 2*min{pr(b<0), pr(b>0))}
@@ -637,7 +625,8 @@ cal.rr.effects.y <- function(outcome.pred = outcome.pred.mu, outcome.pred.zi = o
 
   # **************************************************
   pmed = direct.c_total*(indirect_treated*indirect_Im_t-1)/(direct.c_total*indirect_treated*indirect_Im_t-1)
-
+  pmed.point.mean = mean(direct.c_total)*(mean(indirect_treated*indirect_Im_t)-1)/(mean(direct.c_total)*mean(indirect_treated*indirect_Im_t)-1)
+  pmed.point.med = median(direct.c_total)*(median(indirect_treated*indirect_Im_t)-1)/(median(direct.c_total)*median(indirect_treated*indirect_Im_t)-1)
 
   res = rbind(
     c(mean(direct_control), median(direct_control), sd(direct_control),
@@ -702,7 +691,7 @@ cal.rr.effects.y <- function(outcome.pred = outcome.pred.mu, outcome.pred.zi = o
       quantile(d_avg*i_avg, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(d_avg*i_avg<1), mean(d_avg*i_avg>1))),
 
-    c(mean(pmed), median(pmed), sd(pmed),
+    c(mean(pmed.mean), median(pmed.med), sd(pmed),
       quantile(pmed, probs=c(0.025,0.975), na.rm = T),
       2*min(mean(pmed<1), mean(pmed>1)))
 
