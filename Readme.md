@@ -2,6 +2,9 @@
 
 ## Overview
 
+### An error occure to the package due to a wrong push on Oct 19th. Will fix it tonight (Oct 20th).
+### If urgent use is needed, please download the files and run the medbayes file directly to use.
+
 This R package provides a flexible Bayesian mediation analysis framework particularly suitable for zero-inflated data. Both zero-inflated mediators and zero-inflated outcomes are handled by this package, compatible with a wide range of outcome/mediator distributions. This novel technique employs Bayesian models for both the mediator and the outcome, utilizing Markov Chain Monte Carlo (MCMC) algorithms for parameter estimation. This method can be used to conduct mediation analysis with not only zero-inflated mediators but also a wide range of mediator and outcome distributions that can be fitted with GLMs. 
 
 Priors in the R package _brms_ are used by default, please refer to R package _brms_ for more details. Howerver, author self-defined priors can be incorporated. For details, please check the example sectio below.
