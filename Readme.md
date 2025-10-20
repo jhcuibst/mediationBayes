@@ -3,7 +3,12 @@
 ## Overview
 
 ### An error occure to the package due to a wrong push on Oct 19th. Will fix it tonight (Oct 20th).
-### If urgent use is needed, please download the files and run the medbayes file directly to use.
+### If urgent use is needed, please download the files and run the medbayes file directly to use. Method: select code in file "medbayes" and then run function below to get reuslts.
+
+```r
+outmed <- medbayes(hnb.m, hnb.y, mediator="mnb", treat="x", outcome = "y", ind_mediator = "im",  
+                   control.value = 0, treat.value = 1)
+```
 
 This R package provides a flexible Bayesian mediation analysis framework particularly suitable for zero-inflated data. Both zero-inflated mediators and zero-inflated outcomes are handled by this package, compatible with a wide range of outcome/mediator distributions. This novel technique employs Bayesian models for both the mediator and the outcome, utilizing Markov Chain Monte Carlo (MCMC) algorithms for parameter estimation. This method can be used to conduct mediation analysis with not only zero-inflated mediators but also a wide range of mediator and outcome distributions that can be fitted with GLMs. 
 
@@ -22,7 +27,9 @@ devtools::install_github("jhcuibst/mediationBayes")
 
 ### Load data: 
 
+```r
 data(example_data)
+```
 
 This data (n = 500) is simulated given the 'datasim' function in our package. Users can define the coefficients and distribution and generate data as they want. This existed example dataset only used as a simple example.
 
