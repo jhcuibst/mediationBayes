@@ -7,7 +7,7 @@
 #' @param dat.new New data for prediction
 #' @return Posterior predictions (first column)
 #' @export
-medbayes <- function(model.m = model.m, model.y = model.y, treat = "treatment",
+medbayes.y <- function(model.m = model.m, model.y = model.y, treat = "treatment",
                      mediator = "mediator", ind_mediator = NULL,
                      outcome = "outcome", # ind_outcome = NULL,
                      control.value = 0, treat.value = 1)
@@ -394,5 +394,6 @@ cal.rd.effects.y <- function(outcome.pred = outcome.pred.mu, outcome.pred.zi = o
                     "NDE.AVG",	"NIE_NZ.AVG",	"NIE_Z.AVG", "TOTAL",	"TOTAL_AVG", "PMed")
   res
 }
+
 
 
