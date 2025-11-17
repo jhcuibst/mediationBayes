@@ -3,22 +3,19 @@
 #' @title Run Bayesian mediation model
 #'
 #' @param model.m A brms model for the mediator
-#' @param model.y A brms model for the outcome
 #' @param dat.new New data for prediction
 #' @return Posterior predictions (first column)
 #' @export
 medbayes_zim <- function(model.m = model.m, model.y = model.y,
-                     treat = "treatment", mediator = "mediator",
-                     ind_mediator = NULL, outcome = "outcome",
-                     control.value = 0, treat.value = 1 )
+                     treat = "treatment", mediator = "mediator", ind_mediator = NULL, outcome = "outcome",
+                     control.value = 0, treat.value = 1,
+                     logM = FALSE )
 {
   library(brms)
   # Check whether package 'brms' is installed
   if (!requireNamespace("brms", quietly = TRUE))
     stop("Package 'brms' is required but not installed.")
   message("Mediation analysis function is running...")
-
-  if(!(grepl("hurdle", family(model.m)$family) | grepl("zero", family(model.m)$family))) ind_mediator = NULL
 
   value = c(control.value, treat.value)
   dat.new = model.m$data
@@ -55,27 +52,22 @@ medbayes_zim <- function(model.m = model.m, model.y = model.y,
   for(i in 1:length(value)){
     dat.y.temp <- dat.y
     dat.y.temp[, treat] <- value[i]
-    # dat.y.temp[, mediator] = 0
-
-    if(!is.numeric(dat.y.temp[, mediator])){
-      dat.y.temp[, mediator] = levels(factor(dat.y.temp[, mediator]))[1]
-    }else if(is.numeric(dat.y.temp[, mediator])){
-      dat.y.temp[, mediator] = 0
-    }
-
+    dat.y.temp[, mediator] = 0
     predict.y.cov.mu[i,,] = posterior_linpred(model.y, newdata = dat.y.temp)
   }
 
   # pred_y for treat and mediator(s) effect ----
-
-  if(is.numeric(dat.y.temp[, mediator])){
-    coef.mediator = paste("b_", mediator, sep = "")
-  }else if(!is.numeric(dat.y.temp[, mediator])){
-    coef.med.starts = paste("b_", mediator, sep = "")
-    coef.mediator <- colnames(ef_y)[startsWith(colnames(ef_y), coef.med.starts)]
-  }
-  # coef.mediator = paste("b_", mediator, sep = "")
+  coef.mediator = paste("b_", mediator, sep = "")
   bm = as.matrix(ef_y)[,coef.mediator]
+
+  if( grepl("zero", family(model.y)$family) ){
+    coef.mediator.zi = paste("b_zi_", mediator, sep = "")
+    b_zi_m = as.matrix(ef_y)[,coef.mediator.zi]
+  }
+  if( grepl("hurdle", family(model.y)$family) ){
+    coef.mediator.zi = paste("b_hu_", mediator, sep = "")
+    b_zi_m = as.matrix(ef_y)[,coef.mediator.zi]
+  }
 
   if(!is.null(ind_mediator)){
     coef.ind_mediator = paste("b_", ind_mediator, sep = "")
@@ -128,12 +120,6 @@ medbayes_zim <- function(model.m = model.m, model.y = model.y,
 
   outcome.linpred.mu = array(NA, dim = c(2, 2, 2, ndraws(model.y), nrow(dat.y)))
 
-  if(is.character(value)){
-    comp.val = order(levels(factor(value)))-1
-  }else{
-    comp.val = value
-  }
-
   calc_linpred.mu <- function(i, j, r, bm, bxm, int_of_xm, int_of_xIm, b.ind_m ){
     if(int_of_xm){
       int_xm = 1
@@ -149,17 +135,17 @@ medbayes_zim <- function(model.m = model.m, model.y = model.y,
 
     if(is.null(ind_mediator)){
       as.numeric(
-        as.matrix(predict.ms[j,,]*bm) + as.matrix(bxm*int_xm*comp.val[i]*predict.ms[j,,]) )  +
+        as.matrix(predict.ms[j,,]*bm) + as.matrix(bxm*int_xm*value[i]*predict.ms[j,,]) )  +
         predict.y.cov.mu[i,,]
     }else{
       as.numeric(
-      as.matrix(predict.ms[j,,]*bm) + as.matrix(bxm*int_xm*comp.val[i]*predict.ms[j,,]) +
-      as.matrix(b.ind_m*predict.ind_ms[r,,] + bxIm*int_xIm*comp.val[i]*predict.ind_ms[r,,]) ) +
+      as.matrix(predict.ms[j,,]*bm) + as.matrix(bxm*int_xm*value[i]*predict.ms[j,,]) +
+      as.matrix(b.ind_m*predict.ind_ms[r,,] + bxIm*int_xIm*value[i]*predict.ind_ms[r,,]) ) +
       predict.y.cov.mu[i,,]
     }
   }
 
-  for(i in 1:length(comp.val)){
+  for(i in 1:length(value)){
     for(j in 1:2){
       for(r in 1:2){
         outcome.linpred.mu[i,j,r,,] =  calc_linpred.mu(i,j,r, bm, bxm, int_of_xm, int_of_xIm, b.ind_m )
@@ -168,34 +154,52 @@ medbayes_zim <- function(model.m = model.m, model.y = model.y,
   }
 
   # ----
+  ### for i, j, m:
+  ### 1,1,1,, == x0,m0,Im0
+  ### 1,1,2,, == x0,m0,Im1
+  ### 1,2,2,, == x0,m1,Im1
+  ### 2,1,2,, == x1,m0,Im1 etc.
+
+  # ----
   y_link = family(model.y)$link
 
-  if(y_link == "identity")  outcome.pred = outcome.linpred.mu
-  if(y_link == "logit")     outcome.pred  = exp(outcome.linpred.mu)/(1+exp(outcome.linpred.mu))
+  zi.outcome = grepl("zero", family(model.y)$family) | grepl("hurdle", family(model.y)$family)
+  if(y_link == "identity" & !(zi.outcome))  outcome.pred = outcome.linpred.mu
+  if(y_link == "logit"& !(zi.outcome))     outcome.pred  = exp(outcome.linpred.mu)/(1+exp(outcome.linpred.mu))
 
   if(!is.null(ind_mediator)) {
 
     if(y_link == "logit") {
-      res.rd = cal.rd.effects.ind(outcome.pred, ind_mediator)
-      res.rr = cal.rr.effects.ind(outcome.pred, ind_mediator)
-      rst <- list(effects.rd = res.rd, effects.rr = res.rr, outcome.linpred=outcome.linpred.mu, outcome.pred = outcome.pred)
+      res.rd = cal.rd.effects.ind(outcome.pred)
+      res.rr = cal.rr.effects.ind(outcome.pred)
+      rst <- list(effects.rd = res.rd, effects.rr = res.rr, outcome.pred = outcome.pred)
 
-    }else{
-      res = cal.rd.effects.ind(outcome.pred, ind_mediator)
-      rst <- list(effects = res, outcome.linpred=outcome.linpred.mu, outcome.pred = outcome.pred)
+    } else{
+      res = cal.rd.effects.ind(outcome.pred)
+      rst <- list(effects = res, outcome.pred = outcome.pred)
     }
   } else {
 
     if(y_link == "logit") {
-      res.rd = cal.rd.effects.ind(outcome.pred, ind_mediator)
-      res.rr = cal.rr.effects.ind(outcome.pred, ind_mediator)
+      res.rd = cal.rd.effects(outcome.pred)
+      res.rr = cal.rr.effects(outcome.pred)
       rst <- list(effects.rd = res.rd, effects.rr = res.rr, outcome.linpred=outcome.linpred.mu, outcome.pred = outcome.pred)
+    } else if(zi.outcome){
+
+      res.rr  = cal.rr.effects.y(outcome.pred.mu, outcome.pred.zi)
+
+      res.mu.zi = cal.rd.effects.y(outcome.pred.mu, outcome.pred.zi)
+      res.rd <- list(effects.mu.rd = res.mu.zi)
+      rst <- list(effects.rd = res.rd, effects.rr = res.rr, outcome.linpred.mu=outcome.linpred.mu,
+                  outcome.linpred.zi=outcome.linpred.zi,
+                  outcome.pred.mu= outcome.pred.mu,  outcome.pred.zi =  outcome.pred.zi)
+
     } else{
-      res.rd = cal.rd.effects.ind(outcome.pred, ind_mediator)
-      res.rr = cal.rr.effects.ind(outcome.pred, ind_mediator)
-      rst <- list(effects.rd = res.rd, effects.rr = res.rr, outcome.linpred=outcome.linpred.mu, outcome.pred = outcome.pred)
+      res = cal.rd.effects(outcome.pred)
+      rst <- list(effects = res, outcome.linpred=outcome.linpred.mu, outcome.pred = outcome.pred)
     }
   }
+  # rst
 
   param.terms <- list(
     call = match.call(),
@@ -203,20 +207,19 @@ medbayes_zim <- function(model.m = model.m, model.y = model.y,
     model.y=model.y,
     treat=treat,
     mediator = mediator,
-    if(!is.null(ind_mediator)){
-      ind_mediator = ind_mediator
-    } else{
-      ind_mediator = NULL
-    },
+    ind_mediator = ind_mediator,
     outcome = outcome,
     control.value = control.value,
     treat.value = treat.value
+    # params = list(...),   # if you want to capture extra arguments
+    # estimates = compute_effects(model_m, model_y)
   )
   class(param.terms) <- "params"
+
   return(list(Results = rst, params = param.terms))
 }
 
-cal.rd.effects.ind  <- function(outcome.pred, ind_mediator)
+cal.rd.effects.ind  <- function(outcome.pred)
 {
   direct_control = outcome.pred[2,1,1,,] - outcome.pred[1,1,1,,]
   direct_treated = outcome.pred[2,2,1,,] - outcome.pred[1,2,1,,]
@@ -274,20 +277,20 @@ cal.rd.effects.ind  <- function(outcome.pred, ind_mediator)
       2*min(mean(pmed<0), mean(pmed>0)))
   ) # Bayes p-value: tail probability (see JMbayes), 2*min{pr(b<0), pr(b>0))}
   res[,1:5] = round(res[,1:5], digits=3)
-  res[,6] = round(res[,6], digits=4)
+  res[,6] = signif(res[,6], digits=4)
   res[9,1] = ifelse(res[9,1] < 0, 0, res[9,1] )
   rownames(res) = c("Indirect_control", "Indirect_treated", "Indirect_Indicator",
                     "Direct_control", "Direct_treated",
                     "Total Effect", "Indirect", "Direct", "Prop.Med")
   colnames(res) = c("Mean", "Median", "SD", "l-95% CI", "u-95% CI", "Bayes_p")
-  if(is.null(ind_mediator)){
-    res = res[rownames(res) != "Indirect_Indicator", ]
-  }else{
+  # if(is.null(ind_mediator)){
+  #   res = res[-c("Indirect_Indicator")]
+  # }else{
     res = res
-  }
+  # }
   res
 }
-cal.rr.effects.ind <- function(outcome.pred, ind_mediator)
+cal.rr.effects.ind <- function(outcome.pred)
 {
   direct_control = outcome.pred[2,1,1,,] / outcome.pred[1,1,1,,]
   direct_treated = outcome.pred[2,2,1,,] / outcome.pred[1,2,1,,]
@@ -347,21 +350,20 @@ cal.rr.effects.ind <- function(outcome.pred, ind_mediator)
       2*min(mean(pmed<0), mean(pmed>0)))
   ) # Bayes p-value: tail probability (see JMbayes), 2*min{pr(b<0), pr(b>0))}
   res[,1:5] = round(res[,1:5], digits=3)
-  res[,6] = round(res[,6], digits=4)
+  res[,6] = signif(res[,6], digits=4)
   res[9,1] = ifelse(res[9,1] < 0, 0, res[9,1] )
 
   rownames(res) = c("Indirect_control", "Indirect_treated", "Indirect_Indicator",
                     "Direct_control", "Direct_treated",
                     "Total Effect", "Indirect", "Direct", "Prop.Med")
   colnames(res) = c("Mean", "Median", "SD", "l-95% CI", "u-95% CI", "Bayes_p")
-  if(is.null(ind_mediator)){
-    res = res[rownames(res) != "Indirect_Indicator", ]
-  }else{
+  # if(is.null(ind_mediator)){
+  #   res = res[-c("Indirect_Indicator")]
+  # }else{
     res = res
-  }
+  # }
   res
 }
-
 
 
 
