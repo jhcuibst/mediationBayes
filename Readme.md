@@ -78,5 +78,5 @@ The output object contains several components that users can explore to inspect 
 
 - **Posterior predictions:**
    Posterior samples for predicted outcomes (on both the original and transformed scales) are also available.
-   For instance, outmed$Results$outcome.linpred returns posterior draws on the original linear predictive scale.
+   For instance, _outmed$Results$outcome.linpred_ returns posterior draws on the original linear predictive scale.
    This object is a 2 × 2 × 2 × iter_numbers × nrow(data) array.
