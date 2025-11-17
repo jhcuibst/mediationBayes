@@ -102,5 +102,5 @@ The output object contains several components that users can explore to inspect 
    This object is a 2 × 2 × 2 × iter_numbers × nrow(data) array.
 
 
-_[1] Robins JM. Semantics of causal DAG models and the identification of direct and indirect effects. Highly structured stochastic systems. 2003 May 1:70-82._.
+_[1] Robins JM. Semantics of causal DAG models and the identification of direct and indirect effects. Highly structured stochastic systems. 2003 May 1:70-82._.  
 _[2] VanderWeele T. Explanation in causal inference: methods for mediation and interaction. Oxford University Press; 2015 Feb 13._
