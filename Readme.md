@@ -84,7 +84,7 @@ outmed$Results$effects.rr
 - **Total effect**: Under difference scale, total effect equals **NDE + Indirect_total**, if NIE decomposition was required. Under risk ratio scale, total effect equals **NDE * Indirect_total**.
   
 - **Prop.Med**: Proportion of Mediation. This represents the proportion of total effect that is mediated through mediator. Under difference scale, **Prop.Med = Indirect_total / Total Effect**. While under ratio scale, **Prop.Med = NDE * (Indirect_total-1) / (Total Effect-1)**.<sup>2</sup>
-- 
+  
 
 #### Outputs details
 
