@@ -70,13 +70,13 @@ outmed$Results$effects.rr
 #### Outputs details
 The output object contains several components that users can explore to inspect model parameters, extract results, or compute additional quantities of interest.
 - **Parameter information:**
--   Parameter summaries can be accessed through outmed$params$....
--   For example, outmed$params$model.m returns detailed information about the mediator model.
+   Parameter summaries can be accessed through _outmed$params$..._.
+   For example, _outmed$params$model.m_ returns detailed information about the mediator model.
 
 - **Main results:**
--       Computed mediation results are stored under outmed$Results$..., as shown in the examples above.
+   Computed mediation results are stored under _outmed$Results$..._, as shown in the examples above.
 
 - **Posterior predictions:**
--   Posterior samples for predicted outcomes (on both the original and transformed scales) are also available.
--   For instance, outmed$Results$outcome.linpred returns posterior draws on the original linear predictive scale.
--   This object is a 2 × 2 × 2 × iter_numbers × nrow(data) array.
+   Posterior samples for predicted outcomes (on both the original and transformed scales) are also available.
+   For instance, outmed$Results$outcome.linpred returns posterior draws on the original linear predictive scale.
+   This object is a 2 × 2 × 2 × iter_numbers × nrow(data) array.
