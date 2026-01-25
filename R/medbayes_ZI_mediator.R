@@ -23,7 +23,10 @@ medbayes_zim <- function(model.m = model.m, model.y = model.y,
   value = c(control.value, treat.value)
   dat.new = model.m$data
 
-  dpar.m = c("mu", "hu")
+  dpar.m = NULL
+  if(grepl("zero", family(model.m)$family)) depar.outcome = c("mu", "zi")
+  if(grepl("hurdle", family(model.m)$family)) depar.outcome = c("mu", "hu")
+
   predict.ms <- array(NA, dim = c(2, ndraws(model.m), nrow(dat.new)))
   for(i in 1:length(value)){
     dat.new[, treat] = value[i]
