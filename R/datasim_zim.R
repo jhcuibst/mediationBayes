@@ -187,30 +187,30 @@ dat.sim <- function(
   return(dat)
 }
 
-# if(mdist == "ZINB"){
-#   data1 <- dat.sim(
-#     n.ind = 1, n.measure = n,
-#     px = c(0.5, 0.5),
-#     x.d = x.d,
-#     coef.z = c(g0, gx, gc),
-#     coef.d = c(a0, ax, ac),
-#     mdist = "ZINB",
-#     theta = theta,
-#     ydist = "binom",
-#     sd = 1,
-#     coef.y = c(b0, bx, bm, bc, bxm, bi, bxi) )
-# } else if(mdist == "NB"){
-#   data1 <- dat.sim(
-#     n.ind = 1, n.measure = n,
-#     px = c(0.5, 0.5),
-#     x.d = x.d,
-#     p.zero = c(0,0),
-#     coef.d = c(a0, ax, ac),
-#     mdist = "NB",
-#     theta = 5,
-#     ydist = "binom",
-#     sd = 1,
-#     coef.y = c(b0, bx, bm, bc, bxm, bi, bxi) )
-# }
+if(mdist == "ZINB"){
+  data1 <- dat.sim(
+    n.ind = 1, n.measure = n,
+    px = c(0.5, 0.5),
+    x.d = x.d,
+    coef.z = c(g0, gx, gc),
+    coef.d = c(a0, ax, ac),
+    mdist = "ZINB",
+    theta = theta,
+    ydist = "binom",
+    sd = 1,
+    coef.y = c(b0, bx, bm, bc, bxm, bi, bxi) )
+} else if(mdist == "NB"){
+  data1 <- dat.sim(
+    n.ind = 1, n.measure = n,
+    px = c(0.5, 0.5),
+    x.d = x.d,
+    p.zero = c(0,0),
+    coef.d = c(a0, ax, ac),
+    mdist = "NB",
+    theta = 5,
+    ydist = "binom",
+    sd = 1,
+    coef.y = c(b0, bx, bm, bc, bxm, bi, bxi) )
+}
 
 
