@@ -187,6 +187,22 @@ dat.sim <- function(
   return(dat)
 }
 
+# Get simulated dataset
+n = 1000
+x <- c(rep(0, n/2), rep(1, n/2)) ## Binary X: Half 0 half 1
+# Assume we have a binary covariate with p = 0.4 eaxctly
+age.f <- c(rep(0, 0.6*n/2), rep(1, 0.4*n/2))
+age.m <- c(rep(0, 0.6*n/2), rep(1, 0.4*n/2))
+age <- c(age.f, age.m)
+c <- as.matrix(tibble(age = age))
+x.d <- cbind(x, c) ## build matrix for all X and C
+
+mdist = "ZINB"  ## Define distribution of M, should be one of ZINB, NB, ZIP, Poi
+
+# simualte with ZI% ~ 20% ----
+b0 = -2.0;  bx = 0.30;  bc = 0.2; bm = 0.06; bi = 0.25; bxi = 0; bxm = 0
+g0 = -1.0;  gx = -1.5;  gc = 0.4
+a0 =  3.0;  ax = 0.25;  ac = 0.35; theta = 5
 if(mdist == "ZINB"){
   data1 <- dat.sim(
     n.ind = 1, n.measure = n,
