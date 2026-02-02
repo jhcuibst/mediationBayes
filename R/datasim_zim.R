@@ -110,7 +110,11 @@ dat.sim <- function(
     if (is.null(p.zero)){
       etaz <- b[ind] + x.z %*% coef.z
       m.normal <- rnorm(n, -etaz, 1.6)
-      p.zero = exp(g0+gx*x.d[,2][x.lvl]+coef.z[-(1:2)]*c)/ (1+exp(g0+gx*x.d[,2][x.lvl]+coef.z[-(1:2)]*c))
+
+      lvl <- (as.factor(x.d[,2]))[x.lvl]
+      subdat <- x.d[x.d[,2] == lvl, ]
+      p.zero = exp(subdat %*% coef.z)/(1+exp(subdat %*% coef.z))
+
       p.zero = round(mean(p.zero),2)
       quantiles <- quantile(m.normal, p.zero)
       m.z <-  as.numeric( factor(cut(m.normal, breaks = c(-Inf, quantiles, Inf))) ) - 1
@@ -187,22 +191,21 @@ dat.sim <- function(
   return(dat)
 }
 
-# Get simulated dataset
+# Example for simulating a dataset
+## First define the sample size n
 n = 1000
-x <- c(rep(0, n/2), rep(1, n/2)) ## Binary X: Half 0 half 1
-# Assume we have a binary covariate with p = 0.4 eaxctly
-age.f <- c(rep(0, 0.6*n/2), rep(1, 0.4*n/2))
-age.m <- c(rep(0, 0.6*n/2), rep(1, 0.4*n/2))
-age <- c(age.f, age.m)
-c <- as.matrix(tibble(age = age))
-x.d <- cbind(x, c) ## build matrix for all X and C
-
+## Second define a binary exposure X, p = 0.50
+x <- c(rep(0, n/2), rep(1, n/2))
+## Assume we have a binary variable called covs with p=0.4
+c = matrix(rbinom(n, 1, 0.4), ncol = 1, dimnames = list(NULL, "covs"))
+x.d <- cbind(x, c)
 mdist = "ZINB"  ## Define distribution of M, should be one of ZINB, NB, ZIP, Poi
 
-# simualte with ZI% ~ 20% ----
+# Example: simualte a data with ZI% of M ~ 20% ----
 b0 = -2.0;  bx = 0.30;  bc = 0.2; bm = 0.06; bi = 0.25; bxi = 0; bxm = 0
 g0 = -1.0;  gx = -1.5;  gc = 0.4
 a0 =  3.0;  ax = 0.25;  ac = 0.35; theta = 5
+
 if(mdist == "ZINB"){
   data1 <- dat.sim(
     n.ind = 1, n.measure = n,
